@@ -31,7 +31,6 @@ public class SubjectController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseEntity<?> createSubject(@RequestBody SubjectDto dto) {
         try {
             return ResponseEntity.ok(subjectService.createSubject(dto));
@@ -41,7 +40,6 @@ public class SubjectController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseEntity<?> updateSubject(@PathVariable Long id, @RequestBody SubjectDto dto) {
         try {
             return ResponseEntity.ok(subjectService.updateSubject(id, dto));
@@ -51,7 +49,6 @@ public class SubjectController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteSubject(@PathVariable Long id) {
         try {
             subjectService.deleteSubject(id);

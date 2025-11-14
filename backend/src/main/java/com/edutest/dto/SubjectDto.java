@@ -12,5 +12,8 @@ import lombok.NoArgsConstructor;
 public class SubjectDto {
     private Long id;
     private String name;
+    private String displayName;
     private String description;
+    private String color;
+    private String iconUrl;
 }

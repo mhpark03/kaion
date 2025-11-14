@@ -4,7 +4,6 @@ import com.edutest.dto.LevelDto;
 import com.edutest.service.LevelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,7 +30,6 @@ public class LevelController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseEntity<?> createLevel(@RequestBody LevelDto dto) {
         try {
             return ResponseEntity.ok(levelService.createLevel(dto));
@@ -41,7 +39,6 @@ public class LevelController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
     public ResponseEntity<?> updateLevel(@PathVariable Long id, @RequestBody LevelDto dto) {
         try {
             return ResponseEntity.ok(levelService.updateLevel(id, dto));
@@ -51,7 +48,6 @@ public class LevelController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteLevel(@PathVariable Long id) {
         try {
             levelService.deleteLevel(id);

@@ -39,7 +39,10 @@ public class SubjectService {
 
         Subject subject = Subject.builder()
                 .name(dto.getName())
+                .displayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName())
                 .description(dto.getDescription())
+                .color(dto.getColor())
+                .iconUrl(dto.getIconUrl())
                 .build();
 
         Subject saved = subjectRepository.save(subject);
@@ -59,7 +62,10 @@ public class SubjectService {
         });
 
         subject.setName(dto.getName());
+        subject.setDisplayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName());
         subject.setDescription(dto.getDescription());
+        subject.setColor(dto.getColor());
+        subject.setIconUrl(dto.getIconUrl());
 
         Subject updated = subjectRepository.save(subject);
         return convertToDto(updated);
@@ -77,7 +83,10 @@ public class SubjectService {
         return SubjectDto.builder()
                 .id(subject.getId())
                 .name(subject.getName())
+                .displayName(subject.getDisplayName())
                 .description(subject.getDescription())
+                .color(subject.getColor())
+                .iconUrl(subject.getIconUrl())
                 .build();
     }
 }
