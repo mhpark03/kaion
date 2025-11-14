@@ -40,10 +40,10 @@ public class Question {
     @Column(name = "eval_domain", length = 100)
     private String evalDomain;  // 적용/계산, 이해/개념, 분석/추론 등
 
-    @Column(nullable = false)
+    @Column
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
@@ -55,6 +55,12 @@ public class Question {
 
     @Column(name = "time_limit")
     private Integer timeLimit;
+
+    @Column(name = "reference_image")
+    private String referenceImage;  // 참조 이미지 파일 경로
+
+    @Column(name = "reference_document")
+    private String referenceDocument;  // 참조 문서 파일 경로
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")

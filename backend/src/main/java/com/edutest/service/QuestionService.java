@@ -75,6 +75,8 @@ public class QuestionService {
                 .content(request.getQuestionText())
                 .questionType(Question.QuestionType.valueOf(request.getQuestionType()))
                 .points(request.getPoints())
+                .referenceImage(request.getReferenceImage())
+                .referenceDocument(request.getReferenceDocument())
                 .concepts(concepts)
                 .build();
 
@@ -83,7 +85,8 @@ public class QuestionService {
         // Save options if provided
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             for (QuestionOptionDto optionDto : request.getOptions()) {
-                boolean isCorrect = optionDto.getOptionText().equals(request.getCorrectAnswer());
+                boolean isCorrect = request.getCorrectAnswer() != null &&
+                        optionDto.getOptionText().equals(request.getCorrectAnswer());
                 QuestionOption option = QuestionOption.builder()
                         .question(savedQuestion)
                         .optionText(optionDto.getOptionText())
@@ -128,6 +131,8 @@ public class QuestionService {
         question.setContent(request.getQuestionText());
         question.setQuestionType(Question.QuestionType.valueOf(request.getQuestionType()));
         question.setPoints(request.getPoints());
+        question.setReferenceImage(request.getReferenceImage());
+        question.setReferenceDocument(request.getReferenceDocument());
 
         // Clear and update concepts
         question.getConcepts().clear();
@@ -140,7 +145,8 @@ public class QuestionService {
 
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             for (QuestionOptionDto optionDto : request.getOptions()) {
-                boolean isCorrect = optionDto.getOptionText().equals(request.getCorrectAnswer());
+                boolean isCorrect = request.getCorrectAnswer() != null &&
+                        optionDto.getOptionText().equals(request.getCorrectAnswer());
                 QuestionOption option = QuestionOption.builder()
                         .question(updatedQuestion)
                         .optionText(optionDto.getOptionText())
@@ -203,6 +209,8 @@ public class QuestionService {
                 .questionType(question.getQuestionType().name())
                 .correctAnswer(correctAnswer)
                 .points(question.getPoints())
+                .referenceImage(question.getReferenceImage())
+                .referenceDocument(question.getReferenceDocument())
                 .options(options)
                 .concepts(conceptDtos)
                 .build();

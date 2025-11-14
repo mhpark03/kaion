@@ -2,11 +2,14 @@ package com.edutest.controller;
 
 import com.edutest.dto.QuestionCreateRequest;
 import com.edutest.dto.QuestionDto;
+import com.edutest.service.FileStorageService;
 import com.edutest.service.QuestionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,6 +19,8 @@ import java.util.List;
 public class QuestionController {
 
     private final QuestionService questionService;
+    private final FileStorageService fileStorageService;
+    private final ObjectMapper objectMapper;
 
     @GetMapping
     public ResponseEntity<List<QuestionDto>> getAllQuestions(
@@ -39,21 +44,60 @@ public class QuestionController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<?> createQuestion(@RequestBody QuestionCreateRequest request) {
+    public ResponseEntity<?> createQuestion(
+            @RequestPart("request") String requestJson,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "document", required = false) MultipartFile document) {
         try {
+            QuestionCreateRequest request = objectMapper.readValue(requestJson, QuestionCreateRequest.class);
+
+            // Store image if provided
+            if (image != null && !image.isEmpty()) {
+                String filename = fileStorageService.storeFile(image);
+                request.setReferenceImage(filename);
+            }
+
+            // Store document if provided
+            if (document != null && !document.isEmpty()) {
+                String filename = fileStorageService.storeFile(document);
+                request.setReferenceDocument(filename);
+            }
+
             return ResponseEntity.ok(questionService.createQuestion(request));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to create question: " + e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
-    public ResponseEntity<?> updateQuestion(@PathVariable Long id, @RequestBody QuestionCreateRequest request) {
+    public ResponseEntity<?> updateQuestion(
+            @PathVariable Long id,
+            @RequestPart("request") String requestJson,
+            @RequestPart(value = "image", required = false) MultipartFile image,
+            @RequestPart(value = "document", required = false) MultipartFile document) {
         try {
+            QuestionCreateRequest request = objectMapper.readValue(requestJson, QuestionCreateRequest.class);
+
+            // Store image if provided
+            if (image != null && !image.isEmpty()) {
+                String filename = fileStorageService.storeFile(image);
+                request.setReferenceImage(filename);
+            }
+
+            // Store document if provided
+            if (document != null && !document.isEmpty()) {
+                String filename = fileStorageService.storeFile(document);
+                request.setReferenceDocument(filename);
+            }
+
             return ResponseEntity.ok(questionService.updateQuestion(id, request));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to update question: " + e.getMessage());
         }
     }
 
