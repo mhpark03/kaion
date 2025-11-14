@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { subjectService } from '../services/subjectService';
+import Navbar from './Navbar';
 import './Management.css';
 
 const SubjectManagement = () => {
@@ -10,7 +10,6 @@ const SubjectManagement = () => {
   const [editingSubject, setEditingSubject] = useState(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadSubjects();
@@ -73,15 +72,15 @@ const SubjectManagement = () => {
 
   return (
     <div className="management-container">
-      <div className="management-header">
-        <button onClick={() => navigate('/dashboard')} className="btn-back">
-          ← 대시보드로
-        </button>
-        <h1>과목 관리</h1>
-        <button onClick={openCreateModal} className="btn-create">
-          + 새 과목
-        </button>
-      </div>
+      <Navbar />
+
+      <div className="management-content">
+        <div className="management-header">
+          <h1>과목 관리</h1>
+          <button onClick={openCreateModal} className="btn-create">
+            + 새 과목
+          </button>
+        </div>
 
       {error && <div className="error-message">{error}</div>}
 
@@ -136,6 +135,7 @@ const SubjectManagement = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

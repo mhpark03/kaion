@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { levelService } from '../services/levelService';
+import Navbar from './Navbar';
 import './Management.css';
 
 const LevelManagement = () => {
@@ -10,7 +10,6 @@ const LevelManagement = () => {
   const [editingLevel, setEditingLevel] = useState(null);
   const [formData, setFormData] = useState({ name: '', description: '', difficultyRank: 1 });
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadLevels();
@@ -77,15 +76,15 @@ const LevelManagement = () => {
 
   return (
     <div className="management-container">
-      <div className="management-header">
-        <button onClick={() => navigate('/dashboard')} className="btn-back">
-          ← 대시보드로
-        </button>
-        <h1>난이도 관리</h1>
-        <button onClick={openCreateModal} className="btn-create">
-          + 새 난이도
-        </button>
-      </div>
+      <Navbar />
+
+      <div className="management-content">
+        <div className="management-header">
+          <h1>난이도 관리</h1>
+          <button onClick={openCreateModal} className="btn-create">
+            + 새 난이도
+          </button>
+        </div>
 
       {error && <div className="error-message">{error}</div>}
 
@@ -152,6 +151,7 @@ const LevelManagement = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };

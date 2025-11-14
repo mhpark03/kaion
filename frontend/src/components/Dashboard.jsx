@@ -1,15 +1,11 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Navbar from './Navbar';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const getRoleDisplay = (role) => {
     const roleMap = {
@@ -22,12 +18,7 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-container">
-      <div className="dashboard-header">
-        <h1>EduTest 대시보드</h1>
-        <button onClick={handleLogout} className="btn-logout">
-          로그아웃
-        </button>
-      </div>
+      <Navbar />
 
       <div className="dashboard-content">
         <div className="welcome-card">

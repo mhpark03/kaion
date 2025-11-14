@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { questionService } from '../services/questionService';
 import { subjectService } from '../services/subjectService';
 import { levelService } from '../services/levelService';
+import Navbar from './Navbar';
 import './Management.css';
 
 const QuestionManagement = () => {
@@ -15,7 +15,6 @@ const QuestionManagement = () => {
   const [error, setError] = useState('');
   const [filterSubject, setFilterSubject] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     subjectId: '',
@@ -156,61 +155,62 @@ const QuestionManagement = () => {
 
   return (
     <div className="management-container">
-      <div className="management-header">
-        <button onClick={() => navigate('/dashboard')} className="btn-back">
-          ← 대시보드로
-        </button>
-        <h1>문제 관리</h1>
-        <button onClick={openCreateModal} className="btn-create">
-          + 새 문제
-        </button>
-      </div>
+      <Navbar />
 
-      <div className="filters">
-        <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
-          <option value="">전체 과목</option>
-          {subjects.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}</option>
-          ))}
-        </select>
-        <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
-          <option value="">전체 난이도</option>
-          {levels.map((l) => (
-            <option key={l.id} value={l.id}>{l.name}</option>
-          ))}
-        </select>
-      </div>
+      <div className="management-content">
+        <div className="management-header">
+          <h1>문제 관리</h1>
+          <button onClick={openCreateModal} className="btn-create">
+            + 새 문제
+          </button>
+        </div>
 
-      {error && <div className="error-message">{error}</div>}
+        <div className="filters">
+          <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
+            <option value="">전체 과목</option>
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>{s.name}</option>
+            ))}
+          </select>
+          <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
+            <option value="">전체 난이도</option>
+            {levels.map((l) => (
+              <option key={l.id} value={l.id}>{l.name}</option>
+            ))}
+          </select>
+        </div>
 
-      <div className="questions-list">
-        {questions.map((question) => (
-          <div key={question.id} className="question-card">
-            <div className="question-header">
-              <span className="badge">{question.subjectName}</span>
-              <span className="badge">{question.levelName}</span>
-              <span className="badge">{getQuestionTypeLabel(question.questionType)}</span>
-              <span className="points">{question.points}점</span>
+        {error && <div className="error-message">{error}</div>}
+
+        <div className="questions-list">
+          {questions.map((question) => (
+            <div key={question.id} className="question-card">
+              <div className="question-header">
+                <span className="badge">{question.subjectName}</span>
+                <span className="badge">{question.levelName}</span>
+                <span className="badge">{getQuestionTypeLabel(question.questionType)}</span>
+                <span className="points">{question.points}점</span>
+              </div>
+              <p className="question-text">{question.questionText}</p>
+              {question.options && question.options.length > 0 && (
+                <ul className="options-list">
+                  {question.options.map((opt, idx) => (
+                    <li key={opt.id}>{idx + 1}. {opt.optionText}</li>
+                  ))}
+                </ul>
+              )}
+              <p className="correct-answer">정답: {question.correctAnswer}</p>
+              <div className="item-actions">
+                <button onClick={() => handleEdit(question)} className="btn-edit">
+                  수정
+                </button>
+                <button onClick={() => handleDelete(question.id)} className="btn-delete">
+                  삭제
+                </button>
+              </div>
             </div>
-            <p className="question-text">{question.questionText}</p>
-            {question.options && question.options.length > 0 && (
-              <ul className="options-list">
-                {question.options.map((opt, idx) => (
-                  <li key={opt.id}>{idx + 1}. {opt.optionText}</li>
-                ))}
-              </ul>
-            )}
-            <p className="correct-answer">정답: {question.correctAnswer}</p>
-            <div className="item-actions">
-              <button onClick={() => handleEdit(question)} className="btn-edit">
-                수정
-              </button>
-              <button onClick={() => handleDelete(question.id)} className="btn-delete">
-                삭제
-              </button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {showModal && (
