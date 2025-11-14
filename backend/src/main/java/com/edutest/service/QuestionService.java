@@ -73,9 +73,9 @@ public class QuestionService {
         Question question = Question.builder()
                 .subject(subject)
                 .level(level)
-                .questionText(request.getQuestionText())
-                .questionType(request.getQuestionType())
-                .correctAnswer(request.getCorrectAnswer())
+                .title("Question")
+                .content(request.getQuestionText())
+                .questionType(Question.QuestionType.valueOf(request.getQuestionType()))
                 .points(request.getPoints())
                 .build();
 
@@ -84,10 +84,12 @@ public class QuestionService {
         // Save options if provided
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             for (QuestionOptionDto optionDto : request.getOptions()) {
+                boolean isCorrect = optionDto.getOptionText().equals(request.getCorrectAnswer());
                 QuestionOption option = QuestionOption.builder()
                         .question(savedQuestion)
                         .optionText(optionDto.getOptionText())
                         .optionOrder(optionDto.getOptionOrder())
+                        .isCorrect(isCorrect)
                         .build();
                 questionOptionRepository.save(option);
             }
@@ -109,9 +111,9 @@ public class QuestionService {
 
         question.setSubject(subject);
         question.setLevel(level);
-        question.setQuestionText(request.getQuestionText());
-        question.setQuestionType(request.getQuestionType());
-        question.setCorrectAnswer(request.getCorrectAnswer());
+        question.setTitle("Question");
+        question.setContent(request.getQuestionText());
+        question.setQuestionType(Question.QuestionType.valueOf(request.getQuestionType()));
         question.setPoints(request.getPoints());
 
         Question updatedQuestion = questionRepository.save(question);
@@ -121,10 +123,12 @@ public class QuestionService {
 
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             for (QuestionOptionDto optionDto : request.getOptions()) {
+                boolean isCorrect = optionDto.getOptionText().equals(request.getCorrectAnswer());
                 QuestionOption option = QuestionOption.builder()
                         .question(updatedQuestion)
                         .optionText(optionDto.getOptionText())
                         .optionOrder(optionDto.getOptionOrder())
+                        .isCorrect(isCorrect)
                         .build();
                 questionOptionRepository.save(option);
             }
@@ -143,7 +147,7 @@ public class QuestionService {
     }
 
     private QuestionDto convertToDto(Question question) {
-        List<QuestionOptionDto> options = questionOptionRepository.findByQuestionIdOrderByOptionOrder(question.getId())
+        List<QuestionOptionDto> options = questionOptionRepository.findByQuestionIdOrderByOptionOrderAsc(question.getId())
                 .stream()
                 .map(option -> QuestionOptionDto.builder()
                         .id(option.getId())
@@ -152,15 +156,23 @@ public class QuestionService {
                         .build())
                 .collect(Collectors.toList());
 
+        // Find correct answer from options
+        String correctAnswer = questionOptionRepository.findByQuestionIdOrderByOptionOrderAsc(question.getId())
+                .stream()
+                .filter(option -> option.getIsCorrect() != null && option.getIsCorrect())
+                .map(QuestionOption::getOptionText)
+                .findFirst()
+                .orElse("");
+
         return QuestionDto.builder()
                 .id(question.getId())
                 .subjectId(question.getSubject().getId())
                 .subjectName(question.getSubject().getName())
                 .levelId(question.getLevel().getId())
                 .levelName(question.getLevel().getName())
-                .questionText(question.getQuestionText())
-                .questionType(question.getQuestionType())
-                .correctAnswer(question.getCorrectAnswer())
+                .questionText(question.getContent())
+                .questionType(question.getQuestionType().name())
+                .correctAnswer(correctAnswer)
                 .points(question.getPoints())
                 .options(options)
                 .build();
