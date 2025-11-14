@@ -20,7 +20,14 @@ const ContentManagement = () => {
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
-  const [showLevelListModal, setShowLevelListModal] = useState(false);
+  const [showListModal, setShowListModal] = useState(false);
+  const [listModalType, setListModalType] = useState(''); // 'level', 'grade', 'unit', 'subunit', 'concept'
+  const [selectedFilters, setSelectedFilters] = useState({
+    levelId: '',
+    gradeId: '',
+    unitId: '',
+    subUnitId: ''
+  });
   const [editingItem, setEditingItem] = useState(null);
   const [modalType, setModalType] = useState(''); // 'level', 'grade', 'unit', 'subunit', 'concept'
   const [formData, setFormData] = useState({});
@@ -54,18 +61,18 @@ const ContentManagement = () => {
   };
 
   const openCreateModal = (type) => {
-    if (type === 'level') {
-      setShowLevelListModal(true);
-    } else {
-      setModalType(type);
-      setEditingItem(null);
-      setFormData({});
-      setShowModal(true);
-    }
+    setListModalType(type);
+    setSelectedFilters({
+      levelId: '',
+      gradeId: '',
+      unitId: '',
+      subUnitId: ''
+    });
+    setShowListModal(true);
   };
 
-  const openLevelFormModal = () => {
-    setModalType('level');
+  const openFormModal = (type) => {
+    setModalType(type);
     setEditingItem(null);
     setFormData({});
     setShowModal(true);
@@ -199,6 +206,28 @@ const ContentManagement = () => {
   const getSubUnitName = (subUnitId) => {
     const subUnit = subUnits.find(su => su.id === subUnitId);
     return subUnit ? (subUnit.displayName || subUnit.name) : '-';
+  };
+
+  // Get filtered items based on selected filters
+  const getFilteredItems = () => {
+    switch (listModalType) {
+      case 'level':
+        return levels;
+      case 'grade':
+        if (!selectedFilters.levelId) return [];
+        return grades.filter(g => g.levelId === parseInt(selectedFilters.levelId));
+      case 'unit':
+        if (!selectedFilters.gradeId) return [];
+        return units.filter(u => u.gradeId === parseInt(selectedFilters.gradeId));
+      case 'subunit':
+        if (!selectedFilters.unitId) return [];
+        return subUnits.filter(su => su.unitId === parseInt(selectedFilters.unitId));
+      case 'concept':
+        if (!selectedFilters.subUnitId) return [];
+        return concepts.filter(c => c.subUnitId === parseInt(selectedFilters.subUnitId));
+      default:
+        return [];
+    }
   };
 
   // Get enriched data with full hierarchy
@@ -425,7 +454,8 @@ const ContentManagement = () => {
     );
   };
 
-  const getModalTitle = () => {
+  const getModalTitle = (type) => {
+    const typeToUse = type || modalType;
     const titles = {
       level: '교육과정',
       grade: '학년',
@@ -433,7 +463,7 @@ const ContentManagement = () => {
       subunit: '소단원',
       concept: '핵심 개념'
     };
-    return titles[modalType];
+    return titles[typeToUse];
   };
 
   return (
@@ -465,9 +495,6 @@ const ContentManagement = () => {
           <div className="loading">로딩 중...</div>
         ) : (
           <div className="content-sections">
-            {renderTable('학년', getEnrichedGrades(), 'grade')}
-            {renderTable('대단원', getEnrichedUnits(), 'unit')}
-            {renderTable('소단원', getEnrichedSubUnits(), 'subunit')}
             {renderTable('핵심 개념', getEnrichedConcepts(), 'concept')}
           </div>
         )}
@@ -482,49 +509,246 @@ const ContentManagement = () => {
         </div>
       )}
 
-      {showLevelListModal && (
-        <div className="modal-overlay" onClick={() => setShowLevelListModal(false)}>
+      {showListModal && (
+        <div className="modal-overlay" onClick={() => setShowListModal(false)}>
           <div className="modal-content modal-content-wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>교육과정 관리</h2>
-              <button onClick={openLevelFormModal} className="btn-add-modal">
+              <h2>{getModalTitle(listModalType)} 관리</h2>
+              <button onClick={() => openFormModal(listModalType)} className="btn-add-modal">
                 + 추가
               </button>
             </div>
-            {levels.length === 0 ? (
-              <div className="empty-section">등록된 교육과정이 없습니다</div>
+
+            {/* Filter Section */}
+            <div className="filter-section">
+              {listModalType === 'grade' && (
+                <div className="filter-group">
+                  <label>교육과정</label>
+                  <select
+                    value={selectedFilters.levelId}
+                    onChange={(e) => setSelectedFilters({ ...selectedFilters, levelId: e.target.value })}
+                  >
+                    <option value="">선택하세요</option>
+                    {levels.map((level) => (
+                      <option key={level.id} value={level.id}>
+                        {level.displayName || level.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {listModalType === 'unit' && (
+                <>
+                  <div className="filter-group">
+                    <label>교육과정</label>
+                    <select
+                      value={selectedFilters.levelId}
+                      onChange={(e) => {
+                        setSelectedFilters({ ...selectedFilters, levelId: e.target.value, gradeId: '' });
+                      }}
+                    >
+                      <option value="">선택하세요</option>
+                      {levels.map((level) => (
+                        <option key={level.id} value={level.id}>
+                          {level.displayName || level.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label>학년</label>
+                    <select
+                      value={selectedFilters.gradeId}
+                      onChange={(e) => setSelectedFilters({ ...selectedFilters, gradeId: e.target.value })}
+                      disabled={!selectedFilters.levelId}
+                    >
+                      <option value="">선택하세요</option>
+                      {grades
+                        .filter(g => g.levelId === parseInt(selectedFilters.levelId))
+                        .map((grade) => (
+                          <option key={grade.id} value={grade.id}>
+                            {grade.displayName || grade.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {listModalType === 'subunit' && (
+                <>
+                  <div className="filter-group">
+                    <label>교육과정</label>
+                    <select
+                      value={selectedFilters.levelId}
+                      onChange={(e) => {
+                        setSelectedFilters({ ...selectedFilters, levelId: e.target.value, gradeId: '', unitId: '' });
+                      }}
+                    >
+                      <option value="">선택하세요</option>
+                      {levels.map((level) => (
+                        <option key={level.id} value={level.id}>
+                          {level.displayName || level.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label>학년</label>
+                    <select
+                      value={selectedFilters.gradeId}
+                      onChange={(e) => {
+                        setSelectedFilters({ ...selectedFilters, gradeId: e.target.value, unitId: '' });
+                      }}
+                      disabled={!selectedFilters.levelId}
+                    >
+                      <option value="">선택하세요</option>
+                      {grades
+                        .filter(g => g.levelId === parseInt(selectedFilters.levelId))
+                        .map((grade) => (
+                          <option key={grade.id} value={grade.id}>
+                            {grade.displayName || grade.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label>대단원</label>
+                    <select
+                      value={selectedFilters.unitId}
+                      onChange={(e) => setSelectedFilters({ ...selectedFilters, unitId: e.target.value })}
+                      disabled={!selectedFilters.gradeId}
+                    >
+                      <option value="">선택하세요</option>
+                      {units
+                        .filter(u => u.gradeId === parseInt(selectedFilters.gradeId))
+                        .map((unit) => (
+                          <option key={unit.id} value={unit.id}>
+                            {unit.displayName || unit.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </>
+              )}
+
+              {listModalType === 'concept' && (
+                <>
+                  <div className="filter-group">
+                    <label>교육과정</label>
+                    <select
+                      value={selectedFilters.levelId}
+                      onChange={(e) => {
+                        setSelectedFilters({ ...selectedFilters, levelId: e.target.value, gradeId: '', unitId: '', subUnitId: '' });
+                      }}
+                    >
+                      <option value="">선택하세요</option>
+                      {levels.map((level) => (
+                        <option key={level.id} value={level.id}>
+                          {level.displayName || level.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label>학년</label>
+                    <select
+                      value={selectedFilters.gradeId}
+                      onChange={(e) => {
+                        setSelectedFilters({ ...selectedFilters, gradeId: e.target.value, unitId: '', subUnitId: '' });
+                      }}
+                      disabled={!selectedFilters.levelId}
+                    >
+                      <option value="">선택하세요</option>
+                      {grades
+                        .filter(g => g.levelId === parseInt(selectedFilters.levelId))
+                        .map((grade) => (
+                          <option key={grade.id} value={grade.id}>
+                            {grade.displayName || grade.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label>대단원</label>
+                    <select
+                      value={selectedFilters.unitId}
+                      onChange={(e) => {
+                        setSelectedFilters({ ...selectedFilters, unitId: e.target.value, subUnitId: '' });
+                      }}
+                      disabled={!selectedFilters.gradeId}
+                    >
+                      <option value="">선택하세요</option>
+                      {units
+                        .filter(u => u.gradeId === parseInt(selectedFilters.gradeId))
+                        .map((unit) => (
+                          <option key={unit.id} value={unit.id}>
+                            {unit.displayName || unit.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="filter-group">
+                    <label>소단원</label>
+                    <select
+                      value={selectedFilters.subUnitId}
+                      onChange={(e) => setSelectedFilters({ ...selectedFilters, subUnitId: e.target.value })}
+                      disabled={!selectedFilters.unitId}
+                    >
+                      <option value="">선택하세요</option>
+                      {subUnits
+                        .filter(su => su.unitId === parseInt(selectedFilters.unitId))
+                        .map((subUnit) => (
+                          <option key={subUnit.id} value={subUnit.id}>
+                            {subUnit.displayName || subUnit.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* List Section */}
+            {getFilteredItems().length === 0 ? (
+              <div className="empty-section">
+                {listModalType === 'level'
+                  ? '등록된 교육과정이 없습니다'
+                  : '상위 항목을 선택하거나 등록된 항목이 없습니다'}
+              </div>
             ) : (
               <div className="table-wrapper">
                 <table className="content-table">
                   <thead>
                     <tr>
-                      <th>교육과정</th>
+                      <th>{getModalTitle(listModalType)}</th>
                       <th className="action-header">동작</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {levels.map((item, index) => (
+                    {getFilteredItems().map((item, index) => (
                       <tr key={item.id}>
                         <td className="name-cell">{item.displayName || item.name}</td>
                         <td className="action-cell">
                           <button
-                            onClick={() => handleReorder(item.id, 'up', 'level')}
+                            onClick={() => handleReorder(item.id, 'up', listModalType)}
                             className="btn-order-small"
                             disabled={index === 0}
                           >
                             ▲
                           </button>
                           <button
-                            onClick={() => handleReorder(item.id, 'down', 'level')}
+                            onClick={() => handleReorder(item.id, 'down', listModalType)}
                             className="btn-order-small"
-                            disabled={index === levels.length - 1}
+                            disabled={index === getFilteredItems().length - 1}
                           >
                             ▼
                           </button>
-                          <button onClick={() => handleEdit(item, 'level')} className="btn-edit-small">
+                          <button onClick={() => handleEdit(item, listModalType)} className="btn-edit-small">
                             수정
                           </button>
-                          <button onClick={() => handleDelete(item.id, 'level')} className="btn-delete-small">
+                          <button onClick={() => handleDelete(item.id, listModalType)} className="btn-delete-small">
                             삭제
                           </button>
                         </td>
