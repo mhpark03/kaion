@@ -3,8 +3,12 @@ import { AuthProvider } from './contexts/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
-import SubjectManagement from './components/SubjectManagement';
 import LevelManagement from './components/LevelManagement';
+import GradeManagement from './components/GradeManagement';
+import SubjectManagement from './components/SubjectManagement';
+import UnitManagement from './components/UnitManagement';
+import SubUnitManagement from './components/SubUnitManagement';
+import ConceptManagement from './components/ConceptManagement';
 import QuestionManagement from './components/QuestionManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
@@ -25,6 +29,22 @@ function App() {
             }
           />
           <Route
+            path="/levels"
+            element={
+              <ProtectedRoute>
+                <LevelManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/grades"
+            element={
+              <ProtectedRoute>
+                <GradeManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/subjects"
             element={
               <ProtectedRoute>
@@ -33,10 +53,26 @@ function App() {
             }
           />
           <Route
-            path="/levels"
+            path="/units"
             element={
               <ProtectedRoute>
-                <LevelManagement />
+                <UnitManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sub-units"
+            element={
+              <ProtectedRoute>
+                <SubUnitManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/concepts"
+            element={
+              <ProtectedRoute>
+                <ConceptManagement />
               </ProtectedRoute>
             }
           />

@@ -1,21 +1,18 @@
 package com.edutest.service;
 
+import com.edutest.dto.ConceptDto;
 import com.edutest.dto.QuestionCreateRequest;
 import com.edutest.dto.QuestionDto;
 import com.edutest.dto.QuestionOptionDto;
-import com.edutest.entity.Level;
-import com.edutest.entity.Question;
-import com.edutest.entity.QuestionOption;
-import com.edutest.entity.Subject;
-import com.edutest.repository.LevelRepository;
-import com.edutest.repository.QuestionOptionRepository;
-import com.edutest.repository.QuestionRepository;
-import com.edutest.repository.SubjectRepository;
+import com.edutest.entity.*;
+import com.edutest.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +23,8 @@ public class QuestionService {
     private final QuestionOptionRepository questionOptionRepository;
     private final SubjectRepository subjectRepository;
     private final LevelRepository levelRepository;
+    private final SubUnitRepository subUnitRepository;
+    private final ConceptRepository conceptRepository;
 
     @Transactional(readOnly = true)
     public List<QuestionDto> getAllQuestions() {
@@ -70,13 +69,32 @@ public class QuestionService {
         Level level = levelRepository.findById(request.getLevelId())
                 .orElseThrow(() -> new IllegalArgumentException("Level not found with id: " + request.getLevelId()));
 
+        SubUnit subUnit = null;
+        if (request.getSubUnitId() != null) {
+            subUnit = subUnitRepository.findById(request.getSubUnitId())
+                    .orElseThrow(() -> new IllegalArgumentException("SubUnit not found with id: " + request.getSubUnitId()));
+        }
+
+        // Load concepts
+        Set<Concept> concepts = new HashSet<>();
+        if (request.getConceptIds() != null && !request.getConceptIds().isEmpty()) {
+            concepts = request.getConceptIds().stream()
+                    .map(id -> conceptRepository.findById(id)
+                            .orElseThrow(() -> new IllegalArgumentException("Concept not found with id: " + id)))
+                    .collect(Collectors.toSet());
+        }
+
         Question question = Question.builder()
                 .subject(subject)
                 .level(level)
+                .subUnit(subUnit)
+                .difficulty(request.getDifficulty())
+                .evalDomain(request.getEvalDomain())
                 .title("Question")
                 .content(request.getQuestionText())
                 .questionType(Question.QuestionType.valueOf(request.getQuestionType()))
                 .points(request.getPoints())
+                .concepts(concepts)
                 .build();
 
         Question savedQuestion = questionRepository.save(question);
@@ -109,12 +127,34 @@ public class QuestionService {
         Level level = levelRepository.findById(request.getLevelId())
                 .orElseThrow(() -> new IllegalArgumentException("Level not found with id: " + request.getLevelId()));
 
+        SubUnit subUnit = null;
+        if (request.getSubUnitId() != null) {
+            subUnit = subUnitRepository.findById(request.getSubUnitId())
+                    .orElseThrow(() -> new IllegalArgumentException("SubUnit not found with id: " + request.getSubUnitId()));
+        }
+
+        // Load concepts
+        Set<Concept> concepts = new HashSet<>();
+        if (request.getConceptIds() != null && !request.getConceptIds().isEmpty()) {
+            concepts = request.getConceptIds().stream()
+                    .map(cId -> conceptRepository.findById(cId)
+                            .orElseThrow(() -> new IllegalArgumentException("Concept not found with id: " + cId)))
+                    .collect(Collectors.toSet());
+        }
+
         question.setSubject(subject);
         question.setLevel(level);
+        question.setSubUnit(subUnit);
+        question.setDifficulty(request.getDifficulty());
+        question.setEvalDomain(request.getEvalDomain());
         question.setTitle("Question");
         question.setContent(request.getQuestionText());
         question.setQuestionType(Question.QuestionType.valueOf(request.getQuestionType()));
         question.setPoints(request.getPoints());
+
+        // Clear and update concepts
+        question.getConcepts().clear();
+        question.getConcepts().addAll(concepts);
 
         Question updatedQuestion = questionRepository.save(question);
 
@@ -164,17 +204,32 @@ public class QuestionService {
                 .findFirst()
                 .orElse("");
 
+        // Convert concepts to DTOs
+        List<ConceptDto> conceptDtos = question.getConcepts().stream()
+                .map(concept -> ConceptDto.builder()
+                        .id(concept.getId())
+                        .name(concept.getName())
+                        .displayName(concept.getDisplayName())
+                        .description(concept.getDescription())
+                        .build())
+                .collect(Collectors.toList());
+
         return QuestionDto.builder()
                 .id(question.getId())
                 .subjectId(question.getSubject().getId())
                 .subjectName(question.getSubject().getName())
                 .levelId(question.getLevel().getId())
                 .levelName(question.getLevel().getName())
+                .subUnitId(question.getSubUnit() != null ? question.getSubUnit().getId() : null)
+                .subUnitName(question.getSubUnit() != null ? question.getSubUnit().getName() : null)
+                .difficulty(question.getDifficulty())
+                .evalDomain(question.getEvalDomain())
                 .questionText(question.getContent())
                 .questionType(question.getQuestionType().name())
                 .correctAnswer(correctAnswer)
                 .points(question.getPoints())
                 .options(options)
+                .concepts(conceptDtos)
                 .build();
     }
 }

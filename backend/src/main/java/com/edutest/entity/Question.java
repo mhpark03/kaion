@@ -10,7 +10,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "questions")
@@ -31,6 +33,16 @@ public class Question {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "level_id", nullable = false)
     private Level level;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_unit_id")
+    private SubUnit subUnit;
+
+    @Column(length = 20)
+    private String difficulty;  // E (쉬움), M (보통), H (어려움)
+
+    @Column(name = "eval_domain", length = 100)
+    private String evalDomain;  // 적용/계산, 이해/개념, 분석/추론 등
 
     @Column(nullable = false)
     private String title;
@@ -55,6 +67,15 @@ public class Question {
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<QuestionOption> options = new ArrayList<>();
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+        name = "question_concepts",
+        joinColumns = @JoinColumn(name = "question_id"),
+        inverseJoinColumns = @JoinColumn(name = "concept_id")
+    )
+    @Builder.Default
+    private Set<Concept> concepts = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

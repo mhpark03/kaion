@@ -9,37 +9,33 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "subjects")
+@Table(name = "concepts")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Subject {
+public class Concept {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "grade_id", nullable = false)
-    private Grade grade;
+    @Column(nullable = false, unique = true, length = 100)
+    private String name;  // 작용-반작용, 가속도 계산, 힘의 평형 등
 
-    @Column(nullable = false, length = 50)
-    private String name;
-
-    @Column(name = "display_name", nullable = false, length = 100)
+    @Column(name = "display_name", nullable = false, length = 150)
     private String displayName;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "icon_url")
-    private String iconUrl;
-
-    @Column(length = 20)
-    private String color;
+    @ManyToMany(mappedBy = "concepts")
+    @Builder.Default
+    private Set<Question> questions = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -11,35 +11,32 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "subjects")
+@Table(name = "sub_units")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Subject {
+public class SubUnit {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "grade_id", nullable = false)
-    private Grade grade;
+    @JoinColumn(name = "unit_id", nullable = false)
+    private Unit unit;
 
-    @Column(nullable = false, length = 50)
-    private String name;
+    @Column(nullable = false, length = 150)
+    private String name;  // 뉴턴 법칙과 힘, 물체의 운동 등
 
-    @Column(name = "display_name", nullable = false, length = 100)
+    @Column(name = "display_name", nullable = false, length = 200)
     private String displayName;
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "icon_url")
-    private String iconUrl;
-
-    @Column(length = 20)
-    private String color;
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
