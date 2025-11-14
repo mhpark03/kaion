@@ -24,7 +24,22 @@ public class JwtTokenProvider {
     private long refreshExpiration;
 
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        // JWT secret이 Base64 형식이 아니면 UTF-8 바이트로 직접 사용
+        byte[] keyBytes;
+        try {
+            keyBytes = Decoders.BASE64.decode(jwtSecret);
+        } catch (Exception e) {
+            // Base64 디코딩 실패 시 평문을 바이트로 변환
+            keyBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        }
+
+        // 키가 너무 짧으면 패딩 추가 (최소 256비트 필요)
+        if (keyBytes.length < 32) {
+            byte[] paddedKey = new byte[32];
+            System.arraycopy(keyBytes, 0, paddedKey, 0, keyBytes.length);
+            keyBytes = paddedKey;
+        }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
