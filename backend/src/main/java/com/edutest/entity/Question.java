@@ -40,10 +40,10 @@ public class Question {
     @Column(name = "eval_domain", length = 100)
     private String evalDomain;  // 적용/계산, 이해/개념, 분석/추론 등
 
-    @Column(nullable = false)
+    @Column
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
