@@ -93,6 +93,31 @@ const ContentManagement = () => {
     }
   };
 
+  const handleReorder = async (id, direction, type) => {
+    try {
+      switch (type) {
+        case 'level':
+          await levelService.reorder(id, direction);
+          break;
+        case 'grade':
+          await gradeService.reorder(id, direction);
+          break;
+        case 'unit':
+          await unitService.reorder(id, direction);
+          break;
+        case 'subunit':
+          await subUnitService.reorder(id, direction);
+          break;
+        case 'concept':
+          await conceptService.reorder(id, direction);
+          break;
+      }
+      loadAllData();
+    } catch (error) {
+      setError(error.response?.data || '순서 변경에 실패했습니다');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -238,7 +263,7 @@ const ContentManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <tr key={item.id}>
                     <td>{type === 'level' ? (item.displayName || item.name) : item.levelDisplayName}</td>
                     {type === 'grade' && <td className="name-cell">{item.displayName || item.name}</td>}
@@ -265,6 +290,20 @@ const ContentManagement = () => {
                       </>
                     )}
                     <td className="action-cell">
+                      <button
+                        onClick={() => handleReorder(item.id, 'up', type)}
+                        className="btn-order-small"
+                        disabled={index === 0}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        onClick={() => handleReorder(item.id, 'down', type)}
+                        className="btn-order-small"
+                        disabled={index === items.length - 1}
+                      >
+                        ▼
+                      </button>
                       <button onClick={() => handleEdit(item, type)} className="btn-edit-small">
                         수정
                       </button>
@@ -360,33 +399,6 @@ const ContentManagement = () => {
             value={formData.name || ''}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
-          />
-        </div>
-        <div className="form-group">
-          <label>표시 이름</label>
-          <input
-            type="text"
-            value={formData.displayName || ''}
-            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>설명</label>
-          <textarea
-            value={formData.description || ''}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows="3"
-          />
-        </div>
-        <div className="form-group">
-          <label>순서</label>
-          <input
-            type="number"
-            value={formData.orderIndex || 0}
-            onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) })}
-            required
-            min="0"
           />
         </div>
         <div className="modal-actions">

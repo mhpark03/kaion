@@ -56,4 +56,14 @@ public class LevelController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/reorder")
+    public ResponseEntity<?> reorderLevel(@PathVariable Long id, @RequestParam String direction) {
+        try {
+            levelService.reorderLevel(id, direction);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

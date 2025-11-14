@@ -87,6 +87,42 @@ public class SubUnitService {
         subUnitRepository.deleteById(id);
     }
 
+    @Transactional
+    public void reorderSubUnit(Long id, String direction) {
+        SubUnit currentSubUnit = subUnitRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("SubUnit not found with id: " + id));
+
+        List<SubUnit> subUnitsInUnit = subUnitRepository.findByUnitIdOrderByOrderIndexAsc(currentSubUnit.getUnit().getId());
+        int currentIndex = -1;
+
+        for (int i = 0; i < subUnitsInUnit.size(); i++) {
+            if (subUnitsInUnit.get(i).getId().equals(id)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex == -1) {
+            throw new IllegalArgumentException("SubUnit not found in ordered list");
+        }
+
+        SubUnit swapSubUnit = null;
+        if ("up".equals(direction) && currentIndex > 0) {
+            swapSubUnit = subUnitsInUnit.get(currentIndex - 1);
+        } else if ("down".equals(direction) && currentIndex < subUnitsInUnit.size() - 1) {
+            swapSubUnit = subUnitsInUnit.get(currentIndex + 1);
+        }
+
+        if (swapSubUnit != null) {
+            Integer tempOrder = currentSubUnit.getOrderIndex();
+            currentSubUnit.setOrderIndex(swapSubUnit.getOrderIndex());
+            swapSubUnit.setOrderIndex(tempOrder);
+
+            subUnitRepository.save(currentSubUnit);
+            subUnitRepository.save(swapSubUnit);
+        }
+    }
+
     private SubUnitDto convertToDto(SubUnit subUnit) {
         return SubUnitDto.builder()
                 .id(subUnit.getId())

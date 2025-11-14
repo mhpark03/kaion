@@ -2,7 +2,9 @@ package com.edutest.service;
 
 import com.edutest.dto.ConceptDto;
 import com.edutest.entity.Concept;
+import com.edutest.entity.SubUnit;
 import com.edutest.repository.ConceptRepository;
+import com.edutest.repository.SubUnitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class ConceptService {
 
     private final ConceptRepository conceptRepository;
+    private final SubUnitRepository subUnitRepository;
 
     @Transactional(readOnly = true)
     public List<ConceptDto> getAllConcepts() {
@@ -36,10 +39,18 @@ public class ConceptService {
             throw new IllegalArgumentException("Concept with name '" + dto.getName() + "' already exists");
         }
 
+        SubUnit subUnit = null;
+        if (dto.getSubUnitId() != null) {
+            subUnit = subUnitRepository.findById(dto.getSubUnitId())
+                    .orElseThrow(() -> new IllegalArgumentException("SubUnit not found with id: " + dto.getSubUnitId()));
+        }
+
         Concept concept = Concept.builder()
+                .subUnit(subUnit)
                 .name(dto.getName())
                 .displayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName())
                 .description(dto.getDescription())
+                .orderIndex(dto.getOrderIndex() != null ? dto.getOrderIndex() : 0)
                 .build();
 
         Concept saved = conceptRepository.save(concept);
@@ -57,9 +68,18 @@ public class ConceptService {
             }
         });
 
+        if (dto.getSubUnitId() != null) {
+            SubUnit subUnit = subUnitRepository.findById(dto.getSubUnitId())
+                    .orElseThrow(() -> new IllegalArgumentException("SubUnit not found with id: " + dto.getSubUnitId()));
+            concept.setSubUnit(subUnit);
+        }
+
         concept.setName(dto.getName());
         concept.setDisplayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName());
         concept.setDescription(dto.getDescription());
+        if (dto.getOrderIndex() != null) {
+            concept.setOrderIndex(dto.getOrderIndex());
+        }
 
         Concept updated = conceptRepository.save(concept);
         return convertToDto(updated);
@@ -73,12 +93,57 @@ public class ConceptService {
         conceptRepository.deleteById(id);
     }
 
+    @Transactional
+    public void reorderConcept(Long id, String direction) {
+        Concept currentConcept = conceptRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Concept not found with id: " + id));
+
+        List<Concept> conceptsInSubUnit;
+        if (currentConcept.getSubUnit() != null) {
+            conceptsInSubUnit = conceptRepository.findBySubUnitIdOrderByOrderIndexAsc(currentConcept.getSubUnit().getId());
+        } else {
+            conceptsInSubUnit = conceptRepository.findBySubUnitIsNullOrderByOrderIndexAsc();
+        }
+
+        int currentIndex = -1;
+
+        for (int i = 0; i < conceptsInSubUnit.size(); i++) {
+            if (conceptsInSubUnit.get(i).getId().equals(id)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex == -1) {
+            throw new IllegalArgumentException("Concept not found in ordered list");
+        }
+
+        Concept swapConcept = null;
+        if ("up".equals(direction) && currentIndex > 0) {
+            swapConcept = conceptsInSubUnit.get(currentIndex - 1);
+        } else if ("down".equals(direction) && currentIndex < conceptsInSubUnit.size() - 1) {
+            swapConcept = conceptsInSubUnit.get(currentIndex + 1);
+        }
+
+        if (swapConcept != null) {
+            Integer tempOrder = currentConcept.getOrderIndex();
+            currentConcept.setOrderIndex(swapConcept.getOrderIndex());
+            swapConcept.setOrderIndex(tempOrder);
+
+            conceptRepository.save(currentConcept);
+            conceptRepository.save(swapConcept);
+        }
+    }
+
     private ConceptDto convertToDto(Concept concept) {
         return ConceptDto.builder()
                 .id(concept.getId())
+                .subUnitId(concept.getSubUnit() != null ? concept.getSubUnit().getId() : null)
+                .subUnitName(concept.getSubUnit() != null ? concept.getSubUnit().getName() : null)
                 .name(concept.getName())
                 .displayName(concept.getDisplayName())
                 .description(concept.getDescription())
+                .orderIndex(concept.getOrderIndex())
                 .build();
     }
 }

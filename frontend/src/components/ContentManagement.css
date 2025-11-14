@@ -162,19 +162,38 @@
 .action-cell {
   text-align: center;
   white-space: nowrap;
-  width: 140px;
+  width: 200px;
 }
 
+.btn-order-small,
 .btn-edit-small,
 .btn-delete-small {
-  padding: 5px 12px;
+  padding: 5px 10px;
   border: none;
   border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin: 0 3px;
+  margin: 0 2px;
+}
+
+.btn-order-small {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 4px 8px;
+  font-size: 11px;
+}
+
+.btn-order-small:hover:not(:disabled) {
+  background: #bbdefb;
+}
+
+.btn-order-small:disabled {
+  background: #f5f5f5;
+  color: #bdbdbd;
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .btn-edit-small {

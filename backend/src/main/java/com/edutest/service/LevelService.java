@@ -77,6 +77,42 @@ public class LevelService {
         levelRepository.deleteById(id);
     }
 
+    @Transactional
+    public void reorderLevel(Long id, String direction) {
+        Level currentLevel = levelRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Level not found with id: " + id));
+
+        List<Level> allLevels = levelRepository.findAllByOrderByOrderIndexAsc();
+        int currentIndex = -1;
+
+        for (int i = 0; i < allLevels.size(); i++) {
+            if (allLevels.get(i).getId().equals(id)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex == -1) {
+            throw new IllegalArgumentException("Level not found in ordered list");
+        }
+
+        Level swapLevel = null;
+        if ("up".equals(direction) && currentIndex > 0) {
+            swapLevel = allLevels.get(currentIndex - 1);
+        } else if ("down".equals(direction) && currentIndex < allLevels.size() - 1) {
+            swapLevel = allLevels.get(currentIndex + 1);
+        }
+
+        if (swapLevel != null) {
+            Integer tempOrder = currentLevel.getOrderIndex();
+            currentLevel.setOrderIndex(swapLevel.getOrderIndex());
+            swapLevel.setOrderIndex(tempOrder);
+
+            levelRepository.save(currentLevel);
+            levelRepository.save(swapLevel);
+        }
+    }
+
     private LevelDto convertToDto(Level level) {
         return LevelDto.builder()
                 .id(level.getId())

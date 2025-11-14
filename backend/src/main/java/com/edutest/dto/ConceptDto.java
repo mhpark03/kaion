@@ -11,7 +11,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ConceptDto {
     private Long id;
+    private Long subUnitId;
+    private String subUnitName;
     private String name;
     private String displayName;
     private String description;
+    private Integer orderIndex;
 }

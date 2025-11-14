@@ -6,5 +6,6 @@ export const subUnitService = {
   getById: (id) => api.get(`/sub-units/${id}`),
   create: (data) => api.post('/sub-units', data),
   update: (id, data) => api.put(`/sub-units/${id}`, data),
-  delete: (id) => api.delete(`/sub-units/${id}`)
+  delete: (id) => api.delete(`/sub-units/${id}`),
+  reorder: (id, direction) => api.put(`/sub-units/${id}/reorder?direction=${direction}`)
 };
