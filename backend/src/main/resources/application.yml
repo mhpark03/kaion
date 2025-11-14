@@ -23,6 +23,15 @@ spring:
 file:
   upload-dir: uploads/questions
 
+# AI API configuration
+ai:
+  openai:
+    api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+    chat-url: https://api.openai.com/v1/chat/completions
+    image-generation-url: https://api.openai.com/v1/images/generations
+    chat-model: gpt-4o-mini  # Very cheap: $0.15/1M input, $0.60/1M output
+    image-model: dall-e-3
+
 # JWT 설정
 jwt:
   secret: your-secret-key-change-this-in-production-minimum-256-bits

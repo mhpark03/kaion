@@ -39,6 +39,8 @@ const QuestionCreate = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [documentFile, setDocumentFile] = useState(null);
+  const [aiGenerating, setAiGenerating] = useState(false);
+  const [generateImage, setGenerateImage] = useState(false);
 
   const difficultyLevels = [
     { value: 'VERY_EASY', label: '매우 쉬움' },
@@ -219,6 +221,77 @@ const QuestionCreate = () => {
     setDocumentFile(null);
   };
 
+  const handleAIGenerate = async () => {
+    if (!formData.conceptId) {
+      setError('핵심개념을 먼저 선택해주세요');
+      return;
+    }
+
+    setAiGenerating(true);
+    setError('');
+
+    try {
+      const aiRequestData = {
+        conceptId: parseInt(formData.conceptId),
+        difficulty: formData.difficulty,
+        questionType: formData.questionType,
+        userPrompt: formData.questionText || '',
+        correctAnswer: formData.correctAnswer || '',
+        generateImage: generateImage
+      };
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('request', new Blob([JSON.stringify(aiRequestData)], { type: 'application/json' }));
+
+      if (imageFile) {
+        formDataToSend.append('image', imageFile);
+      }
+
+      if (documentFile) {
+        formDataToSend.append('document', documentFile);
+      }
+
+      const response = await questionService.generateWithAI(formDataToSend);
+
+      // Fill the form with AI-generated content
+      setFormData(prev => ({
+        ...prev,
+        questionText: response.data.questionText || prev.questionText,
+        correctAnswer: response.data.correctAnswer || prev.correctAnswer
+      }));
+
+      // If AI generated an image, download and set it
+      if (response.data.generatedImageUrl) {
+        try {
+          const imageResponse = await fetch(response.data.generatedImageUrl);
+          const imageBlob = await imageResponse.blob();
+          const imageFile = new File([imageBlob], 'ai-generated-image.png', { type: 'image/png' });
+          setImageFile(imageFile);
+
+          // Create preview
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result);
+          };
+          reader.readAsDataURL(imageFile);
+        } catch (imgError) {
+          console.error('Failed to download AI-generated image', imgError);
+        }
+      }
+
+      // Show explanation if available (you might want to display this in a modal or alert)
+      if (response.data.explanation) {
+        alert('AI 해설:\n\n' + response.data.explanation);
+      }
+
+    } catch (error) {
+      setError(error.response?.data || 'AI 문제 생성에 실패했습니다');
+      console.error('AI generation error:', error);
+    } finally {
+      setAiGenerating(false);
+    }
+  };
+
   if (loading) return <div className="loading">로딩 중...</div>;
 
   return (
@@ -328,7 +401,30 @@ const QuestionCreate = () => {
 
           {/* Question Details Section */}
           <div className="form-section">
-            <h2>문제 정보</h2>
+            <div className="section-header">
+              <h2>문제 정보</h2>
+              <button
+                type="button"
+                onClick={handleAIGenerate}
+                disabled={!formData.conceptId || aiGenerating}
+                className="btn-ai-generate"
+              >
+                {aiGenerating ? '🤖 AI 생성 중...' : '🤖 AI로 문제 생성'}
+              </button>
+            </div>
+
+            <div className="ai-options">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={generateImage}
+                  onChange={(e) => setGenerateImage(e.target.checked)}
+                  disabled={aiGenerating}
+                />
+                <span>문제 관련 이미지도 함께 생성</span>
+              </label>
+            </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>난이도 *</label>

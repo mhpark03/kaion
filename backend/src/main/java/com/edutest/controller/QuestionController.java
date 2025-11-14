@@ -1,7 +1,10 @@
 package com.edutest.controller;
 
+import com.edutest.dto.AIQuestionGenerationRequest;
+import com.edutest.dto.AIQuestionGenerationResponse;
 import com.edutest.dto.QuestionCreateRequest;
 import com.edutest.dto.QuestionDto;
+import com.edutest.service.AIQuestionGenerationService;
 import com.edutest.service.FileStorageService;
 import com.edutest.service.QuestionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +23,7 @@ public class QuestionController {
 
     private final QuestionService questionService;
     private final FileStorageService fileStorageService;
+    private final AIQuestionGenerationService aiQuestionGenerationService;
     private final ObjectMapper objectMapper;
 
     @GetMapping
@@ -109,6 +113,27 @@ public class QuestionController {
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/generate-ai")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER')")
+    public ResponseEntity<?> generateQuestionWithAI(
+            @RequestPart("request") String requestJson,
+            @RequestPart(value = "image", required = false) MultipartFile referenceImage,
+            @RequestPart(value = "document", required = false) MultipartFile referenceDocument) {
+        try {
+            AIQuestionGenerationRequest request = objectMapper.readValue(requestJson, AIQuestionGenerationRequest.class);
+            AIQuestionGenerationResponse response = aiQuestionGenerationService.generateQuestion(
+                    request,
+                    referenceImage,
+                    referenceDocument
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to generate question with AI: " + e.getMessage());
         }
     }
 }
