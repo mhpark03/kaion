@@ -136,7 +136,7 @@ const ContentManagement = () => {
   };
 
   const handleAddQuestion = (conceptId) => {
-    navigate(`/question-create?conceptId=${conceptId}`);
+    navigate(`/questions?conceptId=${conceptId}`);
   };
 
   const handleSubmit = async (e) => {
