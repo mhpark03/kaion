@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { unitService } from '../services/unitService';
-import { subjectService } from '../services/subjectService';
+import { gradeService } from '../services/gradeService';
 import Navbar from './Navbar';
 import './Management.css';
 
 const UnitManagement = () => {
   const [units, setUnits] = useState([]);
-  const [subjects, setSubjects] = useState([]);
+  const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingUnit, setEditingUnit] = useState(null);
@@ -14,32 +14,32 @@ const UnitManagement = () => {
     name: '',
     displayName: '',
     description: '',
-    subjectId: '',
+    gradeId: '',
     orderIndex: 0
   });
   const [error, setError] = useState('');
-  const [filterSubject, setFilterSubject] = useState('');
+  const [filterGrade, setFilterGrade] = useState('');
 
   useEffect(() => {
     loadData();
   }, []);
 
   useEffect(() => {
-    if (filterSubject) {
-      loadUnitsBySubject(filterSubject);
+    if (filterGrade) {
+      loadUnitsByGrade(filterGrade);
     } else {
       loadUnits();
     }
-  }, [filterSubject]);
+  }, [filterGrade]);
 
   const loadData = async () => {
     try {
-      const [unitsRes, subjectsRes] = await Promise.all([
+      const [unitsRes, gradesRes] = await Promise.all([
         unitService.getAll(),
-        subjectService.getAll()
+        gradeService.getAll()
       ]);
       setUnits(unitsRes.data);
-      setSubjects(subjectsRes.data);
+      setGrades(gradesRes.data);
     } catch (error) {
       setError('데이터를 불러오는데 실패했습니다');
     } finally {
@@ -56,9 +56,9 @@ const UnitManagement = () => {
     }
   };
 
-  const loadUnitsBySubject = async (subjectId) => {
+  const loadUnitsByGrade = async (gradeId) => {
     try {
-      const response = await unitService.getBySubject(subjectId);
+      const response = await unitService.getByGrade(gradeId);
       setUnits(response.data);
     } catch (error) {
       setError('대단원 목록을 불러오는데 실패했습니다');
@@ -89,7 +89,7 @@ const UnitManagement = () => {
       name: unit.name,
       displayName: unit.displayName,
       description: unit.description,
-      subjectId: unit.subjectId,
+      gradeId: unit.gradeId,
       orderIndex: unit.orderIndex
     });
     setShowModal(true);
@@ -117,7 +117,7 @@ const UnitManagement = () => {
       name: '',
       displayName: '',
       description: '',
-      subjectId: '',
+      gradeId: '',
       orderIndex: 0
     });
   };
@@ -137,11 +137,11 @@ const UnitManagement = () => {
         </div>
 
         <div className="filters">
-          <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
-            <option value="">전체 과목</option>
-            {subjects.map((subject) => (
-              <option key={subject.id} value={subject.id}>
-                {subject.name}
+          <select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)}>
+            <option value="">전체 학년</option>
+            {grades.map((grade) => (
+              <option key={grade.id} value={grade.id}>
+                {grade.displayName || grade.name}
               </option>
             ))}
           </select>
@@ -154,7 +154,7 @@ const UnitManagement = () => {
             <div key={unit.id} className="item-card">
               <h3>{unit.displayName || unit.name}</h3>
               <p className="item-meta">코드: {unit.name}</p>
-              <p className="item-meta">과목: {unit.subjectName}</p>
+              <p className="item-meta">학년: {unit.gradeName}</p>
               <p className="item-meta">순서: {unit.orderIndex}</p>
               <p>{unit.description}</p>
               <div className="item-actions">
@@ -176,16 +176,16 @@ const UnitManagement = () => {
             <h2>{editingUnit ? '대단원 수정' : '새 대단원 추가'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>과목</label>
+                <label>학년</label>
                 <select
-                  value={formData.subjectId}
-                  onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
+                  value={formData.gradeId}
+                  onChange={(e) => setFormData({ ...formData, gradeId: e.target.value })}
                   required
                 >
                   <option value="">선택하세요</option>
-                  {subjects.map((subject) => (
-                    <option key={subject.id} value={subject.id}>
-                      {subject.name}
+                  {grades.map((grade) => (
+                    <option key={grade.id} value={grade.id}>
+                      {grade.displayName || grade.name}
                     </option>
                   ))}
                 </select>

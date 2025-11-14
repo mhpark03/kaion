@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UnitDto {
     private Long id;
-    private Long subjectId;
-    private String subjectName;
+    private Long gradeId;
+    private String gradeName;
     private String name;
     private String displayName;
     private String description;

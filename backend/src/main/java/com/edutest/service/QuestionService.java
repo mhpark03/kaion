@@ -21,7 +21,6 @@ public class QuestionService {
 
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
-    private final SubjectRepository subjectRepository;
     private final LevelRepository levelRepository;
     private final SubUnitRepository subUnitRepository;
     private final ConceptRepository conceptRepository;
@@ -34,22 +33,8 @@ public class QuestionService {
     }
 
     @Transactional(readOnly = true)
-    public List<QuestionDto> getQuestionsBySubject(Long subjectId) {
-        return questionRepository.findBySubjectId(subjectId).stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
     public List<QuestionDto> getQuestionsByLevel(Long levelId) {
         return questionRepository.findByLevelId(levelId).stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    @Transactional(readOnly = true)
-    public List<QuestionDto> getQuestionsBySubjectAndLevel(Long subjectId, Long levelId) {
-        return questionRepository.findBySubjectIdAndLevelId(subjectId, levelId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -63,9 +48,6 @@ public class QuestionService {
 
     @Transactional
     public QuestionDto createQuestion(QuestionCreateRequest request) {
-        Subject subject = subjectRepository.findById(request.getSubjectId())
-                .orElseThrow(() -> new IllegalArgumentException("Subject not found with id: " + request.getSubjectId()));
-
         Level level = levelRepository.findById(request.getLevelId())
                 .orElseThrow(() -> new IllegalArgumentException("Level not found with id: " + request.getLevelId()));
 
@@ -85,7 +67,6 @@ public class QuestionService {
         }
 
         Question question = Question.builder()
-                .subject(subject)
                 .level(level)
                 .subUnit(subUnit)
                 .difficulty(request.getDifficulty())
@@ -121,9 +102,6 @@ public class QuestionService {
         Question question = questionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Question not found with id: " + id));
 
-        Subject subject = subjectRepository.findById(request.getSubjectId())
-                .orElseThrow(() -> new IllegalArgumentException("Subject not found with id: " + request.getSubjectId()));
-
         Level level = levelRepository.findById(request.getLevelId())
                 .orElseThrow(() -> new IllegalArgumentException("Level not found with id: " + request.getLevelId()));
 
@@ -142,7 +120,6 @@ public class QuestionService {
                     .collect(Collectors.toSet());
         }
 
-        question.setSubject(subject);
         question.setLevel(level);
         question.setSubUnit(subUnit);
         question.setDifficulty(request.getDifficulty());
@@ -216,8 +193,6 @@ public class QuestionService {
 
         return QuestionDto.builder()
                 .id(question.getId())
-                .subjectId(question.getSubject().getId())
-                .subjectName(question.getSubject().getName())
                 .levelId(question.getLevel().getId())
                 .levelName(question.getLevel().getName())
                 .subUnitId(question.getSubUnit() != null ? question.getSubUnit().getId() : null)

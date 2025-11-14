@@ -1,23 +1,19 @@
 import { useState, useEffect } from 'react';
 import { questionService } from '../services/questionService';
-import { subjectService } from '../services/subjectService';
 import { levelService } from '../services/levelService';
 import Navbar from './Navbar';
 import './Management.css';
 
 const QuestionManagement = () => {
   const [questions, setQuestions] = useState([]);
-  const [subjects, setSubjects] = useState([]);
   const [levels, setLevels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [error, setError] = useState('');
-  const [filterSubject, setFilterSubject] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
 
   const [formData, setFormData] = useState({
-    subjectId: '',
     levelId: '',
     questionText: '',
     questionType: 'MULTIPLE_CHOICE',
@@ -32,15 +28,11 @@ const QuestionManagement = () => {
 
   useEffect(() => {
     loadQuestions();
-  }, [filterSubject, filterLevel]);
+  }, [filterLevel]);
 
   const loadData = async () => {
     try {
-      const [subjectsRes, levelsRes] = await Promise.all([
-        subjectService.getAll(),
-        levelService.getAll()
-      ]);
-      setSubjects(subjectsRes.data);
+      const levelsRes = await levelService.getAll();
       setLevels(levelsRes.data);
       await loadQuestions();
     } catch (error) {
@@ -53,7 +45,6 @@ const QuestionManagement = () => {
   const loadQuestions = async () => {
     try {
       const params = {};
-      if (filterSubject) params.subjectId = filterSubject;
       if (filterLevel) params.levelId = filterLevel;
       const response = await questionService.getAll(params);
       setQuestions(response.data);
@@ -83,7 +74,6 @@ const QuestionManagement = () => {
   const handleEdit = (question) => {
     setEditingQuestion(question);
     setFormData({
-      subjectId: question.subjectId,
       levelId: question.levelId,
       questionText: question.questionText,
       questionType: question.questionType,
@@ -113,7 +103,6 @@ const QuestionManagement = () => {
   const resetForm = () => {
     setEditingQuestion(null);
     setFormData({
-      subjectId: '',
       levelId: '',
       questionText: '',
       questionType: 'MULTIPLE_CHOICE',
@@ -166,12 +155,6 @@ const QuestionManagement = () => {
         </div>
 
         <div className="filters">
-          <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
-            <option value="">전체 과목</option>
-            {subjects.map((s) => (
-              <option key={s.id} value={s.id}>{s.name}</option>
-            ))}
-          </select>
           <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
             <option value="">전체 난이도</option>
             {levels.map((l) => (
@@ -186,7 +169,6 @@ const QuestionManagement = () => {
           {questions.map((question) => (
             <div key={question.id} className="question-card">
               <div className="question-header">
-                <span className="badge">{question.subjectName}</span>
                 <span className="badge">{question.levelName}</span>
                 <span className="badge">{getQuestionTypeLabel(question.questionType)}</span>
                 <span className="points">{question.points}점</span>
@@ -219,19 +201,6 @@ const QuestionManagement = () => {
             <h2>{editingQuestion ? '문제 수정' : '새 문제 추가'}</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-row">
-                <div className="form-group">
-                  <label>과목</label>
-                  <select
-                    value={formData.subjectId}
-                    onChange={(e) => setFormData({ ...formData, subjectId: e.target.value })}
-                    required
-                  >
-                    <option value="">선택하세요</option>
-                    {subjects.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
                 <div className="form-group">
                   <label>난이도</label>
                   <select

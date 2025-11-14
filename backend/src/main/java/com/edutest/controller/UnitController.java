@@ -20,9 +20,9 @@ public class UnitController {
         return ResponseEntity.ok(unitService.getAllUnits());
     }
 
-    @GetMapping("/by-subject/{subjectId}")
-    public ResponseEntity<List<UnitDto>> getUnitsBySubject(@PathVariable Long subjectId) {
-        return ResponseEntity.ok(unitService.getUnitsBySubject(subjectId));
+    @GetMapping("/by-grade/{gradeId}")
+    public ResponseEntity<List<UnitDto>> getUnitsByGrade(@PathVariable Long gradeId) {
+        return ResponseEntity.ok(unitService.getUnitsByGrade(gradeId));
     }
 
     @GetMapping("/{id}")
