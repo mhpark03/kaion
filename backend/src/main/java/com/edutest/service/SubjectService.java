@@ -35,8 +35,11 @@ public class SubjectService {
 
     @Transactional
     public SubjectDto createSubject(SubjectDto dto) {
-        Grade grade = gradeRepository.findById(dto.getGradeId())
-                .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + dto.getGradeId()));
+        Grade grade = null;
+        if (dto.getGradeId() != null) {
+            grade = gradeRepository.findById(dto.getGradeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + dto.getGradeId()));
+        }
 
         Subject subject = Subject.builder()
                 .grade(grade)
@@ -83,8 +86,8 @@ public class SubjectService {
     private SubjectDto convertToDto(Subject subject) {
         return SubjectDto.builder()
                 .id(subject.getId())
-                .gradeId(subject.getGrade().getId())
-                .gradeName(subject.getGrade().getName())
+                .gradeId(subject.getGrade() != null ? subject.getGrade().getId() : null)
+                .gradeName(subject.getGrade() != null ? subject.getGrade().getName() : null)
                 .name(subject.getName())
                 .displayName(subject.getDisplayName())
                 .description(subject.getDescription())
