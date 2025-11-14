@@ -160,8 +160,8 @@ public class AIQuestionGenerationService {
 
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", openaiChatModel);
-            requestBody.put("max_tokens", 2048);
-            requestBody.put("temperature", 0.7);
+            requestBody.put("max_completion_tokens", 16384);  // GPT-5 mini uses more reasoning tokens for complex educational content
+            // GPT-5 reasoning models only support temperature = 1 (default), so we omit it
 
             List<Map<String, Object>> messages = new ArrayList<>();
 
@@ -198,15 +198,18 @@ public class AIQuestionGenerationService {
 
     private AIQuestionGenerationResponse parseOpenAIResponse(String responseJson) {
         try {
+            log.info("OpenAI Raw Response: {}", responseJson);
             JsonNode root = objectMapper.readTree(responseJson);
             JsonNode messageContent = root.path("choices").get(0).path("message").path("content");
             String textResponse = messageContent.asText();
+            log.info("OpenAI Message Content: {}", textResponse);
 
             // Extract JSON from response
             int jsonStart = textResponse.indexOf("{");
             int jsonEnd = textResponse.lastIndexOf("}") + 1;
             if (jsonStart >= 0 && jsonEnd > jsonStart) {
                 String jsonString = textResponse.substring(jsonStart, jsonEnd);
+                log.info("Extracted JSON: {}", jsonString);
                 JsonNode questionData = objectMapper.readTree(jsonString);
 
                 return AIQuestionGenerationResponse.builder()
@@ -215,6 +218,7 @@ public class AIQuestionGenerationService {
                         .explanation(questionData.path("explanation").asText())
                         .build();
             } else {
+                log.error("No JSON found in response. Text response: {}", textResponse);
                 throw new RuntimeException("Invalid JSON response from OpenAI");
             }
         } catch (Exception e) {

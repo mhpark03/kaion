@@ -29,7 +29,7 @@ ai:
     api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
     chat-url: https://api.openai.com/v1/chat/completions
     image-generation-url: https://api.openai.com/v1/images/generations
-    chat-model: gpt-5-nano  # Ultra cheap: $0.05/1M input, $0.40/1M output (50% cheaper than GPT-4o mini)
+    chat-model: gpt-5-mini  # Better reasoning for education: $0.25/1M input, $2.00/1M output
     image-model: dall-e-3
 
 # JWT 설정
