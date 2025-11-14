@@ -8,7 +8,6 @@ import Navbar from './Navbar';
 import './ContentManagement.css';
 
 const ContentManagement = () => {
-  const [activeTab, setActiveTab] = useState('level');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,72 +21,29 @@ const ContentManagement = () => {
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [modalType, setModalType] = useState(''); // 'level', 'grade', 'unit', 'subunit', 'concept'
   const [formData, setFormData] = useState({});
 
-  // Filter states
-  const [filterLevel, setFilterLevel] = useState('');
-  const [filterGrade, setFilterGrade] = useState('');
-  const [filterUnit, setFilterUnit] = useState('');
-  const [filterSubUnit, setFilterSubUnit] = useState('');
-
   useEffect(() => {
-    loadData();
-  }, [activeTab, filterLevel, filterGrade, filterUnit, filterSubUnit]);
+    loadAllData();
+  }, []);
 
-  const loadData = async () => {
+  const loadAllData = async () => {
     setLoading(true);
     setError('');
     try {
-      switch (activeTab) {
-        case 'level':
-          const levelsRes = await levelService.getAll();
-          setLevels(levelsRes.data);
-          break;
-        case 'grade':
-          const [gradesRes, levelsForGradeRes] = await Promise.all([
-            filterLevel ? gradeService.getByLevel(filterLevel) : gradeService.getAll(),
-            levelService.getAll()
-          ]);
-          setGrades(gradesRes.data);
-          setLevels(levelsForGradeRes.data);
-          break;
-        case 'unit':
-          const [unitsRes, levelsForUnitRes, gradesForUnitRes] = await Promise.all([
-            filterGrade ? unitService.getByGrade(filterGrade) : unitService.getAll(),
-            levelService.getAll(),
-            gradeService.getAll()
-          ]);
-          setUnits(unitsRes.data);
-          setLevels(levelsForUnitRes.data);
-          setGrades(gradesForUnitRes.data);
-          break;
-        case 'subunit':
-          const [subUnitsRes, levelsForSubUnitRes, gradesForSubUnitRes, unitsForSubUnitRes] = await Promise.all([
-            filterUnit ? subUnitService.getByUnit(filterUnit) : subUnitService.getAll(),
-            levelService.getAll(),
-            gradeService.getAll(),
-            unitService.getAll()
-          ]);
-          setSubUnits(subUnitsRes.data);
-          setLevels(levelsForSubUnitRes.data);
-          setGrades(gradesForSubUnitRes.data);
-          setUnits(unitsForSubUnitRes.data);
-          break;
-        case 'concept':
-          const [conceptsRes, levelsForConceptRes, gradesForConceptRes, unitsForConceptRes, subUnitsForConceptRes] = await Promise.all([
-            filterSubUnit ? conceptService.getBySubUnit(filterSubUnit) : conceptService.getAll(),
-            levelService.getAll(),
-            gradeService.getAll(),
-            unitService.getAll(),
-            subUnitService.getAll()
-          ]);
-          setConcepts(conceptsRes.data);
-          setLevels(levelsForConceptRes.data);
-          setGrades(gradesForConceptRes.data);
-          setUnits(unitsForConceptRes.data);
-          setSubUnits(subUnitsForConceptRes.data);
-          break;
-      }
+      const [levelsRes, gradesRes, unitsRes, subUnitsRes, conceptsRes] = await Promise.all([
+        levelService.getAll(),
+        gradeService.getAll(),
+        unitService.getAll(),
+        subUnitService.getAll(),
+        conceptService.getAll()
+      ]);
+      setLevels(levelsRes.data);
+      setGrades(gradesRes.data);
+      setUnits(unitsRes.data);
+      setSubUnits(subUnitsRes.data);
+      setConcepts(conceptsRes.data);
     } catch (error) {
       setError('데이터를 불러오는데 실패했습니다');
       console.error(error);
@@ -96,31 +52,25 @@ const ContentManagement = () => {
     }
   };
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    setFilterLevel('');
-    setFilterGrade('');
-    setFilterUnit('');
-    setFilterSubUnit('');
-    resetForm();
-  };
-
-  const openCreateModal = () => {
-    resetForm();
+  const openCreateModal = (type) => {
+    setModalType(type);
+    setEditingItem(null);
+    setFormData({});
     setShowModal(true);
   };
 
-  const handleEdit = (item) => {
+  const handleEdit = (item, type) => {
+    setModalType(type);
     setEditingItem(item);
     setFormData({ ...item });
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, type) => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
 
     try {
-      switch (activeTab) {
+      switch (type) {
         case 'level':
           await levelService.delete(id);
           break;
@@ -137,7 +87,7 @@ const ContentManagement = () => {
           await conceptService.delete(id);
           break;
       }
-      loadData();
+      loadAllData();
     } catch (error) {
       setError(error.response?.data || '삭제에 실패했습니다');
     }
@@ -149,7 +99,7 @@ const ContentManagement = () => {
 
     try {
       if (editingItem) {
-        switch (activeTab) {
+        switch (modalType) {
           case 'level':
             await levelService.update(editingItem.id, formData);
             break;
@@ -167,7 +117,7 @@ const ContentManagement = () => {
             break;
         }
       } else {
-        switch (activeTab) {
+        switch (modalType) {
           case 'level':
             await levelService.create(formData);
             break;
@@ -186,120 +136,148 @@ const ContentManagement = () => {
         }
       }
       setShowModal(false);
-      resetForm();
-      loadData();
+      setFormData({});
+      loadAllData();
     } catch (error) {
       setError(error.response?.data || '저장에 실패했습니다');
     }
   };
 
-  const resetForm = () => {
-    setEditingItem(null);
-    setFormData({});
+  // Get full hierarchy path for items
+  const getLevelName = (levelId) => {
+    const level = levels.find(l => l.id === levelId);
+    return level ? (level.displayName || level.name) : '-';
   };
 
-  const renderFilters = () => {
-    return (
-      <div className="content-filters">
-        {activeTab === 'grade' && (
-          <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
-            <option value="">전체 교육과정</option>
-            {levels.map((level) => (
-              <option key={level.id} value={level.id}>
-                {level.displayName || level.name}
-              </option>
-            ))}
-          </select>
-        )}
-        {activeTab === 'unit' && (
-          <select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)}>
-            <option value="">전체 학년</option>
-            {grades.map((grade) => (
-              <option key={grade.id} value={grade.id}>
-                {grade.displayName || grade.name}
-              </option>
-            ))}
-          </select>
-        )}
-        {activeTab === 'subunit' && (
-          <select value={filterUnit} onChange={(e) => setFilterUnit(e.target.value)}>
-            <option value="">전체 대단원</option>
-            {units.map((unit) => (
-              <option key={unit.id} value={unit.id}>
-                {unit.displayName || unit.name}
-              </option>
-            ))}
-          </select>
-        )}
-        {activeTab === 'concept' && (
-          <select value={filterSubUnit} onChange={(e) => setFilterSubUnit(e.target.value)}>
-            <option value="">전체 소단원</option>
-            {subUnits.map((subUnit) => (
-              <option key={subUnit.id} value={subUnit.id}>
-                {subUnit.displayName || subUnit.name}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-    );
+  const getGradeName = (gradeId) => {
+    const grade = grades.find(g => g.id === gradeId);
+    return grade ? (grade.displayName || grade.name) : '-';
   };
 
-  const renderList = () => {
-    let items = [];
-    switch (activeTab) {
-      case 'level':
-        items = levels;
-        break;
-      case 'grade':
-        items = grades;
-        break;
-      case 'unit':
-        items = units;
-        break;
-      case 'subunit':
-        items = subUnits;
-        break;
-      case 'concept':
-        items = concepts;
-        break;
-    }
+  const getUnitName = (unitId) => {
+    const unit = units.find(u => u.id === unitId);
+    return unit ? (unit.displayName || unit.name) : '-';
+  };
 
-    if (items.length === 0) {
-      return <div className="empty-message">등록된 항목이 없습니다</div>;
-    }
+  const getSubUnitName = (subUnitId) => {
+    const subUnit = subUnits.find(su => su.id === subUnitId);
+    return subUnit ? (subUnit.displayName || subUnit.name) : '-';
+  };
 
+  // Get enriched data with full hierarchy
+  const getEnrichedGrades = () => {
+    return grades.map(grade => ({
+      ...grade,
+      levelDisplayName: getLevelName(grade.levelId)
+    }));
+  };
+
+  const getEnrichedUnits = () => {
+    return units.map(unit => {
+      const grade = grades.find(g => g.id === unit.gradeId);
+      return {
+        ...unit,
+        gradeDisplayName: getGradeName(unit.gradeId),
+        levelDisplayName: grade ? getLevelName(grade.levelId) : '-'
+      };
+    });
+  };
+
+  const getEnrichedSubUnits = () => {
+    return subUnits.map(subUnit => {
+      const unit = units.find(u => u.id === subUnit.unitId);
+      const grade = unit ? grades.find(g => g.id === unit.gradeId) : null;
+      return {
+        ...subUnit,
+        unitDisplayName: getUnitName(subUnit.unitId),
+        gradeDisplayName: unit ? getGradeName(unit.gradeId) : '-',
+        levelDisplayName: grade ? getLevelName(grade.levelId) : '-'
+      };
+    });
+  };
+
+  const getEnrichedConcepts = () => {
+    return concepts.map(concept => {
+      const subUnit = subUnits.find(su => su.id === concept.subUnitId);
+      const unit = subUnit ? units.find(u => u.id === subUnit.unitId) : null;
+      const grade = unit ? grades.find(g => g.id === unit.gradeId) : null;
+      return {
+        ...concept,
+        subUnitDisplayName: getSubUnitName(concept.subUnitId),
+        unitDisplayName: unit ? getUnitName(unit.id) : '-',
+        gradeDisplayName: unit ? getGradeName(unit.gradeId) : '-',
+        levelDisplayName: grade ? getLevelName(grade.levelId) : '-',
+        questionCount: 0 // TODO: 실제 문제 개수를 가져오도록 구현
+      };
+    });
+  };
+
+  const renderTable = (title, items, type) => {
     return (
-      <div className="content-list">
-        {items.map((item) => (
-          <div key={item.id} className="content-item">
-            <div className="item-info">
-              <h3>{item.displayName || item.name}</h3>
-              {item.description && <p className="item-description">{item.description}</p>}
-              {activeTab === 'grade' && item.levelName && (
-                <span className="badge">{item.levelName}</span>
-              )}
-              {activeTab === 'unit' && item.gradeName && (
-                <span className="badge">{item.gradeName}</span>
-              )}
-              {activeTab === 'subunit' && item.unitName && (
-                <span className="badge">{item.unitName}</span>
-              )}
-              {activeTab === 'concept' && item.subUnitName && (
-                <span className="badge">{item.subUnitName}</span>
-              )}
-              <span className="order-badge">순서: {item.orderIndex}</span>
-            </div>
-            <div className="item-actions">
-              <button onClick={() => handleEdit(item)} className="btn-edit">
-                수정
-              </button>
-              <button onClick={() => handleDelete(item.id)} className="btn-delete">
-                삭제
-              </button>
-            </div>
+      <div className="content-section">
+        <div className="section-header">
+          <h2>{title}</h2>
+          <button onClick={() => openCreateModal(type)} className="btn-add-section">
+            + 추가
+          </button>
+        </div>
+        {items.length === 0 ? (
+          <div className="empty-section">등록된 {title}이(가) 없습니다</div>
+        ) : (
+          <div className="table-wrapper">
+            <table className="content-table">
+              <thead>
+                <tr>
+                  <th>교육과정</th>
+                  {type !== 'level' && <th>학년</th>}
+                  {(type === 'unit' || type === 'subunit' || type === 'concept') && <th>대단원</th>}
+                  {(type === 'subunit' || type === 'concept') && <th>소단원</th>}
+                  {type === 'concept' && <th>핵심개념</th>}
+                  {type === 'concept' && <th className="count-header">문제수</th>}
+                  <th className="action-header">동작</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td>{type === 'level' ? (item.displayName || item.name) : item.levelDisplayName}</td>
+                    {type === 'grade' && <td className="name-cell">{item.displayName || item.name}</td>}
+                    {type === 'unit' && (
+                      <>
+                        <td>{item.gradeDisplayName}</td>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                      </>
+                    )}
+                    {type === 'subunit' && (
+                      <>
+                        <td>{item.gradeDisplayName}</td>
+                        <td>{item.unitDisplayName}</td>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                      </>
+                    )}
+                    {type === 'concept' && (
+                      <>
+                        <td>{item.gradeDisplayName}</td>
+                        <td>{item.unitDisplayName}</td>
+                        <td>{item.subUnitDisplayName}</td>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                        <td className="count-cell">{item.questionCount}</td>
+                      </>
+                    )}
+                    <td className="action-cell">
+                      <button onClick={() => handleEdit(item, type)} className="btn-edit-small">
+                        수정
+                      </button>
+                      <button onClick={() => handleDelete(item.id, type)} className="btn-delete-small">
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
+        )}
       </div>
     );
   };
@@ -307,7 +285,7 @@ const ContentManagement = () => {
   const renderForm = () => {
     return (
       <form onSubmit={handleSubmit}>
-        {activeTab === 'grade' && (
+        {modalType === 'grade' && (
           <div className="form-group">
             <label>교육과정</label>
             <select
@@ -324,7 +302,7 @@ const ContentManagement = () => {
             </select>
           </div>
         )}
-        {activeTab === 'unit' && (
+        {modalType === 'unit' && (
           <div className="form-group">
             <label>학년</label>
             <select
@@ -341,7 +319,7 @@ const ContentManagement = () => {
             </select>
           </div>
         )}
-        {activeTab === 'subunit' && (
+        {modalType === 'subunit' && (
           <div className="form-group">
             <label>대단원</label>
             <select
@@ -358,7 +336,7 @@ const ContentManagement = () => {
             </select>
           </div>
         )}
-        {activeTab === 'concept' && (
+        {modalType === 'concept' && (
           <div className="form-group">
             <label>소단원</label>
             <select
@@ -423,7 +401,7 @@ const ContentManagement = () => {
     );
   };
 
-  const getTabTitle = () => {
+  const getModalTitle = () => {
     const titles = {
       level: '교육과정',
       grade: '학년',
@@ -431,7 +409,7 @@ const ContentManagement = () => {
       subunit: '소단원',
       concept: '핵심 개념'
     };
-    return titles[activeTab];
+    return titles[modalType];
   };
 
   return (
@@ -439,59 +417,43 @@ const ContentManagement = () => {
       <Navbar />
 
       <div className="content-management">
-        <div className="content-tabs">
-          <button
-            className={`tab-button ${activeTab === 'level' ? 'active' : ''}`}
-            onClick={() => handleTabChange('level')}
-          >
-            교육과정
+        <div className="quick-add-buttons">
+          <button onClick={() => openCreateModal('level')} className="quick-add-btn level">
+            + 교육과정
           </button>
-          <button
-            className={`tab-button ${activeTab === 'grade' ? 'active' : ''}`}
-            onClick={() => handleTabChange('grade')}
-          >
-            학년
+          <button onClick={() => openCreateModal('grade')} className="quick-add-btn grade">
+            + 학년
           </button>
-          <button
-            className={`tab-button ${activeTab === 'unit' ? 'active' : ''}`}
-            onClick={() => handleTabChange('unit')}
-          >
-            대단원
+          <button onClick={() => openCreateModal('unit')} className="quick-add-btn unit">
+            + 대단원
           </button>
-          <button
-            className={`tab-button ${activeTab === 'subunit' ? 'active' : ''}`}
-            onClick={() => handleTabChange('subunit')}
-          >
-            소단원
+          <button onClick={() => openCreateModal('subunit')} className="quick-add-btn subunit">
+            + 소단원
           </button>
-          <button
-            className={`tab-button ${activeTab === 'concept' ? 'active' : ''}`}
-            onClick={() => handleTabChange('concept')}
-          >
-            핵심 개념
+          <button onClick={() => openCreateModal('concept')} className="quick-add-btn concept">
+            + 핵심 개념
           </button>
         </div>
 
-        <div className="content-body">
-          <div className="management-header">
-            <h1>{getTabTitle()} 관리</h1>
-            <button onClick={openCreateModal} className="btn-create">
-              + 새 {getTabTitle()}
-            </button>
+        {error && <div className="error-message">{error}</div>}
+
+        {loading ? (
+          <div className="loading">로딩 중...</div>
+        ) : (
+          <div className="content-sections">
+            {renderTable('교육과정', levels, 'level')}
+            {renderTable('학년', getEnrichedGrades(), 'grade')}
+            {renderTable('대단원', getEnrichedUnits(), 'unit')}
+            {renderTable('소단원', getEnrichedSubUnits(), 'subunit')}
+            {renderTable('핵심 개념', getEnrichedConcepts(), 'concept')}
           </div>
-
-          {renderFilters()}
-
-          {error && <div className="error-message">{error}</div>}
-
-          {loading ? <div className="loading">로딩 중...</div> : renderList()}
-        </div>
+        )}
       </div>
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>{editingItem ? `${getTabTitle()} 수정` : `새 ${getTabTitle()} 추가`}</h2>
+            <h2>{editingItem ? `${getModalTitle()} 수정` : `${getModalTitle()} 추가`}</h2>
             {renderForm()}
           </div>
         </div>
