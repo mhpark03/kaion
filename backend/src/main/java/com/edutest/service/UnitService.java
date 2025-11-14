@@ -2,8 +2,10 @@ package com.edutest.service;
 
 import com.edutest.dto.UnitDto;
 import com.edutest.entity.Grade;
+import com.edutest.entity.Subject;
 import com.edutest.entity.Unit;
 import com.edutest.repository.GradeRepository;
+import com.edutest.repository.SubjectRepository;
 import com.edutest.repository.UnitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ public class UnitService {
 
     private final UnitRepository unitRepository;
     private final GradeRepository gradeRepository;
+    private final SubjectRepository subjectRepository;
 
     @Transactional(readOnly = true)
     public List<UnitDto> getAllUnits() {
@@ -45,8 +48,13 @@ public class UnitService {
         Grade grade = gradeRepository.findById(dto.getGradeId())
                 .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + dto.getGradeId()));
 
+        // Get default "Science" subject
+        Subject subject = subjectRepository.findByName("Science")
+                .orElseThrow(() -> new IllegalArgumentException("Default subject 'Science' not found"));
+
         Unit unit = Unit.builder()
                 .grade(grade)
+                .subject(subject)
                 .name(dto.getName())
                 .displayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName())
                 .description(dto.getDescription())
