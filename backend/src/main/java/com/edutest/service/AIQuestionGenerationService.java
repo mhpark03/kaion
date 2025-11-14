@@ -27,6 +27,7 @@ import java.util.*;
 public class AIQuestionGenerationService {
 
     private final ConceptRepository conceptRepository;
+    private final SecretService secretService;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -154,9 +155,15 @@ public class AIQuestionGenerationService {
 
     private String callOpenAIAPI(String systemPrompt, List<Map<String, Object>> userContentParts) {
         try {
+            // Try to get API key from S3 first, fallback to environment variable
+            String apiKey = getOpenAIApiKey();
+            if (apiKey == null || apiKey.trim().isEmpty()) {
+                throw new RuntimeException("OpenAI API key not configured. Please set OPENAI_API_KEY environment variable or store in S3.");
+            }
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(openaiApiKey);
+            headers.setBearerAuth(apiKey);
 
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", openaiChatModel);
@@ -300,5 +307,40 @@ public class AIQuestionGenerationService {
             case "ESSAY": return "서술형";
             default: return "객관식";
         }
+    }
+
+    /**
+     * Get OpenAI API key from S3 or fallback to environment variable
+     * Priority: S3 > Environment Variable
+     */
+    private String getOpenAIApiKey() {
+        try {
+            // First, try to retrieve from S3
+            String s3ApiKey = secretService.retrieveSecret("openai-api-key");
+            if (s3ApiKey != null && !s3ApiKey.trim().isEmpty()) {
+                log.debug("Using OpenAI API key from S3");
+                return s3ApiKey.trim();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to retrieve API key from S3, falling back to environment variable: {}", e.getMessage());
+        }
+
+        // Fallback to environment variable
+        if (openaiApiKey != null && !openaiApiKey.trim().isEmpty() &&
+            !openaiApiKey.equals("your-openai-api-key-here")) {
+            log.debug("Using OpenAI API key from environment variable");
+            return openaiApiKey.trim();
+        }
+
+        return null;
+    }
+
+    /**
+     * Store OpenAI API key to S3 for cross-PC access
+     * @param apiKey The OpenAI API key to store
+     */
+    public void storeOpenAIApiKey(String apiKey) {
+        secretService.storeSecret("openai-api-key", apiKey);
+        log.info("OpenAI API key stored to S3 successfully");
     }
 }

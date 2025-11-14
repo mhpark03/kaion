@@ -23,6 +23,15 @@ spring:
 file:
   upload-dir: uploads/questions
 
+# AWS S3 configuration (for secret storage)
+aws:
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME:edutest-secrets-bucket}
+    region: ${AWS_REGION:ap-northeast-2}
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+    secrets-folder: secrets/  # Folder for storing secrets in S3
+
 # AI API configuration
 ai:
   openai:

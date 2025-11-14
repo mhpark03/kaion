@@ -71,6 +71,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/sub-units/**").permitAll()
                         .requestMatchers("/api/concepts/**").permitAll()
                         .requestMatchers("/api/questions/**").permitAll()
+                        .requestMatchers("/api/secrets/**").authenticated()  // Requires authentication (ADMIN only via @PreAuthorize)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
