@@ -189,6 +189,14 @@ const QuestionCreate = () => {
       const unit = units.find(u => u.id === subUnit.unitId);
       const grade = grades.find(g => g.id === unit.gradeId);
 
+      // Convert AI options to QuestionOptionDto format
+      const options = aiPreview.options && aiPreview.options.length > 0
+        ? aiPreview.options.map((optionText, index) => ({
+            optionText: optionText,
+            optionOrder: index + 1
+          }))
+        : [];
+
       const requestData = {
         conceptIds: [parseInt(formData.conceptId)],
         levelId: grade.levelId,
@@ -198,7 +206,8 @@ const QuestionCreate = () => {
         questionText: aiPreview.questionText,
         questionType: formData.questionType,
         correctAnswer: aiPreview.correctAnswer,
-        points: 10
+        points: 10,
+        options: options
       };
 
       const formDataToSend = new FormData();
@@ -575,11 +584,21 @@ const QuestionCreate = () => {
                 <div className="preview-section">
                   <h3>📋 보기</h3>
                   <div className="preview-options">
-                    <div className="option-placeholder">
-                      {formData.questionType === 'MULTIPLE_CHOICE'
-                        ? '※ 객관식 보기는 "수정 후 저장"을 선택하여 추가할 수 있습니다.'
-                        : '※ O/X 보기는 자동으로 생성됩니다.'}
-                    </div>
+                    {aiPreview.options && aiPreview.options.length > 0 ? (
+                      <ol className="options-list">
+                        {aiPreview.options.map((option, idx) => (
+                          <li key={idx} className="option-item">
+                            {option}
+                          </li>
+                        ))}
+                      </ol>
+                    ) : (
+                      <div className="option-placeholder">
+                        {formData.questionType === 'MULTIPLE_CHOICE'
+                          ? '※ 객관식 보기는 "수정 후 저장"을 선택하여 추가할 수 있습니다.'
+                          : '※ O/X 보기는 자동으로 생성됩니다.'}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

@@ -761,6 +761,44 @@
   margin-top: 8px;
 }
 
+.options-list {
+  list-style: none;
+  counter-reset: option-counter;
+  padding: 0;
+  margin: 0;
+}
+
+.option-item {
+  counter-increment: option-counter;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 15px;
+  line-height: 1.6;
+  position: relative;
+  padding-left: 45px;
+}
+
+.option-item::before {
+  content: counter(option-counter);
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 13px;
+}
+
 .image-upload {
   width: 100%;
   min-height: 200px;

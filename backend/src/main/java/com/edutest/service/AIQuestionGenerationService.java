@@ -139,14 +139,37 @@ public class AIQuestionGenerationService {
         promptBuilder.append("- 난이도: ").append(difficultyKorean).append("\n");
         promptBuilder.append("- 문제 유형: ").append(questionTypeKorean).append("\n\n");
 
-        // Add JSON format instruction
+        // Add JSON format instruction based on question type
         promptBuilder.append("다음 JSON 형식으로 응답해주세요:\n");
         promptBuilder.append("{\n");
-        promptBuilder.append("  \"questionText\": \"생성된 문제 텍스트\",\n");
+        promptBuilder.append("  \"questionText\": \"문제 본문 (보기는 제외하고 질문만 작성)\",\n");
+
+        // Add options field for multiple choice and true/false questions
+        if ("객관식".equals(questionTypeKorean)) {
+            promptBuilder.append("  \"options\": [\"선택지1\", \"선택지2\", \"선택지3\", \"선택지4\", \"선택지5\"],\n");
+        } else if ("O/X".equals(questionTypeKorean)) {
+            promptBuilder.append("  \"options\": [\"O (맞다)\", \"X (틀리다)\"],\n");
+        }
+
         promptBuilder.append("  \"correctAnswer\": \"정답\",\n");
         promptBuilder.append("  \"explanation\": \"상세한 해설\"\n");
         promptBuilder.append("}\n\n");
-        promptBuilder.append("문제는 해당 학년 수준에 맞게, 학생들이 개념을 깊이 이해할 수 있도록 구성해주세요.");
+
+        promptBuilder.append("**중요 지침:**\n");
+        if ("객관식".equals(questionTypeKorean)) {
+            promptBuilder.append("1. questionText에는 보기(선택지)를 포함하지 말고, 질문 본문만 작성하세요.\n");
+            promptBuilder.append("2. options 배열에 4-5개의 선택지를 작성하세요. 각 선택지는 명확하고 간결하게 작성하세요.\n");
+            promptBuilder.append("3. correctAnswer는 options 배열에 있는 선택지 중 하나와 정확히 일치해야 합니다.\n");
+            promptBuilder.append("4. 오답 선택지는 그럴듯하지만 명확히 틀린 내용이어야 합니다.\n");
+        } else if ("O/X".equals(questionTypeKorean)) {
+            promptBuilder.append("1. questionText에는 O/X로 판단할 수 있는 명제를 작성하세요.\n");
+            promptBuilder.append("2. options는 항상 [\"O (맞다)\", \"X (틀리다)\"]로 고정됩니다.\n");
+            promptBuilder.append("3. correctAnswer는 \"O (맞다)\" 또는 \"X (틀리다)\" 중 하나여야 합니다.\n");
+        } else {
+            promptBuilder.append("1. questionText에는 학생이 답을 서술하거나 작성할 수 있는 질문을 작성하세요.\n");
+            promptBuilder.append("2. correctAnswer에는 모범 답안을 작성하세요.\n");
+        }
+        promptBuilder.append("\n문제는 해당 학년 수준에 맞게, 학생들이 개념을 깊이 이해할 수 있도록 구성해주세요.");
 
         return promptBuilder.toString();
     }
@@ -285,8 +308,17 @@ public class AIQuestionGenerationService {
                 log.info("Extracted JSON: {}", jsonString);
                 JsonNode questionData = objectMapper.readTree(jsonString);
 
+                // Parse options if present
+                List<String> options = new ArrayList<>();
+                if (questionData.has("options") && questionData.get("options").isArray()) {
+                    for (JsonNode optionNode : questionData.get("options")) {
+                        options.add(optionNode.asText());
+                    }
+                }
+
                 return AIQuestionGenerationResponse.builder()
                         .questionText(questionData.path("questionText").asText())
+                        .options(options.isEmpty() ? null : options)
                         .correctAnswer(questionData.path("correctAnswer").asText())
                         .explanation(questionData.path("explanation").asText())
                         .build();
