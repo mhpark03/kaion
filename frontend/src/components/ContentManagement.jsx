@@ -28,6 +28,7 @@ const ContentManagement = () => {
     unitId: '',
     subUnitId: ''
   });
+  const [newItemName, setNewItemName] = useState(''); // For inline add in list modal
   const [editingItem, setEditingItem] = useState(null);
   const [modalType, setModalType] = useState(''); // 'level', 'grade', 'unit', 'subunit', 'concept'
   const [formData, setFormData] = useState({});
@@ -87,6 +88,7 @@ const ContentManagement = () => {
       unitId: '',
       subUnitId: ''
     });
+    setNewItemName('');
     setShowListModal(true);
   };
 
@@ -203,6 +205,64 @@ const ContentManagement = () => {
       loadAllData();
     } catch (error) {
       setError(error.response?.data || '저장에 실패했습니다');
+    }
+  };
+
+  const handleQuickAdd = async () => {
+    if (!newItemName.trim()) {
+      setError('이름을 입력해주세요');
+      return;
+    }
+
+    // Validate parent selection for non-level types
+    if (listModalType === 'grade' && !selectedFilters.levelId) {
+      setError('교육과정을 선택해주세요');
+      return;
+    }
+    if (listModalType === 'unit' && !selectedFilters.gradeId) {
+      setError('학년을 선택해주세요');
+      return;
+    }
+    if (listModalType === 'subunit' && !selectedFilters.unitId) {
+      setError('대단원을 선택해주세요');
+      return;
+    }
+    if (listModalType === 'concept' && !selectedFilters.subUnitId) {
+      setError('소단원을 선택해주세요');
+      return;
+    }
+
+    setError('');
+
+    try {
+      const data = { name: newItemName.trim() };
+
+      switch (listModalType) {
+        case 'level':
+          await levelService.create(data);
+          break;
+        case 'grade':
+          data.levelId = selectedFilters.levelId;
+          await gradeService.create(data);
+          break;
+        case 'unit':
+          data.gradeId = selectedFilters.gradeId;
+          await unitService.create(data);
+          break;
+        case 'subunit':
+          data.unitId = selectedFilters.unitId;
+          await subUnitService.create(data);
+          break;
+        case 'concept':
+          data.subUnitId = selectedFilters.subUnitId;
+          await conceptService.create(data);
+          break;
+      }
+
+      setNewItemName('');
+      loadAllData();
+    } catch (error) {
+      setError(error.response?.data || '추가에 실패했습니다');
     }
   };
 
@@ -530,12 +590,24 @@ const ContentManagement = () => {
           <div className="modal-content modal-content-wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{getModalTitle(listModalType)} 관리</h2>
-              <div className="modal-header-buttons">
+              <div className="modal-header-actions">
+                <input
+                  type="text"
+                  placeholder="이름 입력"
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleQuickAdd();
+                    }
+                  }}
+                  className="quick-add-input"
+                />
+                <button onClick={handleQuickAdd} className="btn-quick-add">
+                  +
+                </button>
                 <button onClick={() => setShowListModal(false)} className="btn-cancel-modal">
                   취소
-                </button>
-                <button onClick={() => openFormModal(listModalType)} className="btn-add-modal">
-                  + 추가
                 </button>
               </div>
             </div>

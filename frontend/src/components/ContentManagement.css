@@ -303,9 +303,47 @@
   color: #333;
 }
 
-.modal-header-buttons {
+.modal-header-actions {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.quick-add-input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 200px;
+  transition: all 0.2s ease;
+}
+
+.quick-add-input:focus {
+  outline: none;
+  border-color: #2196F3;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+}
+
+.btn-quick-add {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-quick-add:hover {
+  background: #1976d2;
+  transform: scale(1.05);
 }
 
 .btn-cancel-modal {
