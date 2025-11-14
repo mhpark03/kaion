@@ -20,6 +20,7 @@ const ContentManagement = () => {
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
+  const [showLevelListModal, setShowLevelListModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [modalType, setModalType] = useState(''); // 'level', 'grade', 'unit', 'subunit', 'concept'
   const [formData, setFormData] = useState({});
@@ -53,7 +54,18 @@ const ContentManagement = () => {
   };
 
   const openCreateModal = (type) => {
-    setModalType(type);
+    if (type === 'level') {
+      setShowLevelListModal(true);
+    } else {
+      setModalType(type);
+      setEditingItem(null);
+      setFormData({});
+      setShowModal(true);
+    }
+  };
+
+  const openLevelFormModal = () => {
+    setModalType('level');
     setEditingItem(null);
     setFormData({});
     setShowModal(true);
@@ -453,7 +465,6 @@ const ContentManagement = () => {
           <div className="loading">로딩 중...</div>
         ) : (
           <div className="content-sections">
-            {renderTable('교육과정', levels, 'level')}
             {renderTable('학년', getEnrichedGrades(), 'grade')}
             {renderTable('대단원', getEnrichedUnits(), 'unit')}
             {renderTable('소단원', getEnrichedSubUnits(), 'subunit')}
@@ -467,6 +478,62 @@ const ContentManagement = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>{editingItem ? `${getModalTitle()} 수정` : `${getModalTitle()} 추가`}</h2>
             {renderForm()}
+          </div>
+        </div>
+      )}
+
+      {showLevelListModal && (
+        <div className="modal-overlay" onClick={() => setShowLevelListModal(false)}>
+          <div className="modal-content modal-content-wide" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>교육과정 관리</h2>
+              <button onClick={openLevelFormModal} className="btn-add-modal">
+                + 추가
+              </button>
+            </div>
+            {levels.length === 0 ? (
+              <div className="empty-section">등록된 교육과정이 없습니다</div>
+            ) : (
+              <div className="table-wrapper">
+                <table className="content-table">
+                  <thead>
+                    <tr>
+                      <th>교육과정</th>
+                      <th className="action-header">동작</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {levels.map((item, index) => (
+                      <tr key={item.id}>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                        <td className="action-cell">
+                          <button
+                            onClick={() => handleReorder(item.id, 'up', 'level')}
+                            className="btn-order-small"
+                            disabled={index === 0}
+                          >
+                            ▲
+                          </button>
+                          <button
+                            onClick={() => handleReorder(item.id, 'down', 'level')}
+                            className="btn-order-small"
+                            disabled={index === levels.length - 1}
+                          >
+                            ▼
+                          </button>
+                          <button onClick={() => handleEdit(item, 'level')} className="btn-edit-small">
+                            수정
+                          </button>
+                          <button onClick={() => handleDelete(item.id, 'level')} className="btn-delete-small">
+                            삭제
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

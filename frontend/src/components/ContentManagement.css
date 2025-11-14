@@ -263,6 +263,42 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
+.modal-content-wide {
+  max-width: 800px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f1f3f5;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.btn-add-modal {
+  padding: 8px 16px;
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-add-modal:hover {
+  background: #1976d2;
+}
+
 .modal-content h2 {
   margin: 0 0 20px 0;
   font-size: 20px;
