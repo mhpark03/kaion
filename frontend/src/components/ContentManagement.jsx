@@ -167,7 +167,7 @@ const ContentManagement = () => {
         <div className="section-header">
           <h2>{title}</h2>
           <button onClick={() => openCreateModal(type)} className="btn-add-section">
-            + {title} 추가
+            + 추가
           </button>
         </div>
         {items.length === 0 ? (
@@ -180,8 +180,8 @@ const ContentManagement = () => {
                   {columns.map((col, idx) => (
                     <th key={idx}>{col}</th>
                   ))}
-                  <th>등록수</th>
-                  <th>동작</th>
+                  <th className="count-header">하위 항목</th>
+                  <th className="action-header">동작</th>
                 </tr>
               </thead>
               <tbody>
@@ -200,8 +200,6 @@ const ContentManagement = () => {
                       <td>{item.subUnitName || '-'}</td>
                     )}
                     <td className="name-cell">{item.displayName || item.name}</td>
-                    <td className="description-cell">{item.description || '-'}</td>
-                    <td className="order-cell">{item.orderIndex}</td>
                     <td className="count-cell">{getChildCount(item, type)}</td>
                     <td className="action-cell">
                       <button onClick={() => handleEdit(item, type)} className="btn-edit-small">
@@ -380,11 +378,11 @@ const ContentManagement = () => {
           <div className="loading">로딩 중...</div>
         ) : (
           <div className="content-sections">
-            {renderTable('교육과정', levels, 'level', ['이름', '설명', '순서'])}
-            {renderTable('학년', grades, 'grade', ['교육과정', '이름', '설명', '순서'])}
-            {renderTable('대단원', units, 'unit', ['학년', '이름', '설명', '순서'])}
-            {renderTable('소단원', subUnits, 'subunit', ['대단원', '이름', '설명', '순서'])}
-            {renderTable('핵심 개념', concepts, 'concept', ['소단원', '이름', '설명', '순서'])}
+            {renderTable('교육과정', levels, 'level', ['이름'])}
+            {renderTable('학년', grades, 'grade', ['교육과정', '이름'])}
+            {renderTable('대단원', units, 'unit', ['학년', '이름'])}
+            {renderTable('소단원', subUnits, 'subunit', ['대단원', '이름'])}
+            {renderTable('핵심 개념', concepts, 'concept', ['소단원', '이름'])}
           </div>
         )}
       </div>

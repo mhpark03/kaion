@@ -56,13 +56,13 @@
 .content-sections {
   display: flex;
   flex-direction: column;
-  gap: 30px;
+  gap: 24px;
 }
 
 .content-section {
   background: white;
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: 1px solid #e9ecef;
 }
@@ -71,25 +71,25 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
   border-bottom: 2px solid #f1f3f5;
 }
 
 .section-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #333;
 }
 
 .btn-add-section {
-  padding: 8px 16px;
+  padding: 6px 14px;
   background: #f8f9fa;
   color: #495057;
   border: 1px solid #dee2e6;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -115,12 +115,18 @@
 }
 
 .content-table th {
-  padding: 12px 16px;
+  padding: 10px 14px;
   text-align: left;
   font-weight: 600;
   color: #495057;
   border-bottom: 2px solid #dee2e6;
   white-space: nowrap;
+  font-size: 13px;
+}
+
+.count-header,
+.action-header {
+  text-align: center;
 }
 
 .content-table tbody tr {
@@ -132,28 +138,18 @@
   background: #f8f9fa;
 }
 
+.content-table tbody tr:last-child {
+  border-bottom: none;
+}
+
 .content-table td {
-  padding: 12px 16px;
+  padding: 10px 14px;
   color: #333;
 }
 
 .name-cell {
   font-weight: 500;
   color: #212529;
-}
-
-.description-cell {
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #666;
-}
-
-.order-cell {
-  text-align: center;
-  color: #666;
-  width: 80px;
 }
 
 .count-cell {
@@ -164,21 +160,21 @@
 }
 
 .action-cell {
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
-  width: 150px;
+  width: 140px;
 }
 
 .btn-edit-small,
 .btn-delete-small {
-  padding: 6px 12px;
+  padding: 5px 12px;
   border: none;
   border-radius: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-left: 6px;
+  margin: 0 3px;
 }
 
 .btn-edit-small {
@@ -201,7 +197,7 @@
 
 .empty-section {
   text-align: center;
-  padding: 40px 20px;
+  padding: 30px 20px;
   color: #999;
   font-size: 14px;
   background: #f8f9fa;
