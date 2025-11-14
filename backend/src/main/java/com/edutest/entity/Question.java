@@ -31,6 +31,10 @@ public class Question {
     private Level level;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id", nullable = false)
+    private Subject subject;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sub_unit_id")
     private SubUnit subUnit;
 

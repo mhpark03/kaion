@@ -22,6 +22,7 @@ public class QuestionService {
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository questionOptionRepository;
     private final LevelRepository levelRepository;
+    private final SubjectRepository subjectRepository;
     private final SubUnitRepository subUnitRepository;
     private final ConceptRepository conceptRepository;
 
@@ -52,9 +53,28 @@ public class QuestionService {
                 .orElseThrow(() -> new IllegalArgumentException("Level not found with id: " + request.getLevelId()));
 
         SubUnit subUnit = null;
+        Subject subject = null;
         if (request.getSubUnitId() != null) {
             subUnit = subUnitRepository.findById(request.getSubUnitId())
                     .orElseThrow(() -> new IllegalArgumentException("SubUnit not found with id: " + request.getSubUnitId()));
+
+            // Get subject from unit hierarchy
+            if (subUnit.getUnit() != null) {
+                subject = subUnit.getUnit().getSubject();
+            }
+        }
+
+        // If subject is still null, try to get it from concept
+        if (subject == null && request.getConceptIds() != null && !request.getConceptIds().isEmpty()) {
+            Concept concept = conceptRepository.findById(request.getConceptIds().get(0))
+                    .orElseThrow(() -> new IllegalArgumentException("Concept not found"));
+            if (concept.getSubUnit() != null && concept.getSubUnit().getUnit() != null) {
+                subject = concept.getSubUnit().getUnit().getSubject();
+            }
+        }
+
+        if (subject == null) {
+            throw new IllegalArgumentException("Cannot determine subject for question. Please provide valid subUnitId or conceptId.");
         }
 
         // Load concepts
@@ -68,6 +88,7 @@ public class QuestionService {
 
         Question question = Question.builder()
                 .level(level)
+                .subject(subject)
                 .subUnit(subUnit)
                 .difficulty(request.getDifficulty())
                 .evalDomain(request.getEvalDomain())
@@ -109,9 +130,28 @@ public class QuestionService {
                 .orElseThrow(() -> new IllegalArgumentException("Level not found with id: " + request.getLevelId()));
 
         SubUnit subUnit = null;
+        Subject subject = null;
         if (request.getSubUnitId() != null) {
             subUnit = subUnitRepository.findById(request.getSubUnitId())
                     .orElseThrow(() -> new IllegalArgumentException("SubUnit not found with id: " + request.getSubUnitId()));
+
+            // Get subject from unit hierarchy
+            if (subUnit.getUnit() != null) {
+                subject = subUnit.getUnit().getSubject();
+            }
+        }
+
+        // If subject is still null, try to get it from concept
+        if (subject == null && request.getConceptIds() != null && !request.getConceptIds().isEmpty()) {
+            Concept concept = conceptRepository.findById(request.getConceptIds().get(0))
+                    .orElseThrow(() -> new IllegalArgumentException("Concept not found"));
+            if (concept.getSubUnit() != null && concept.getSubUnit().getUnit() != null) {
+                subject = concept.getSubUnit().getUnit().getSubject();
+            }
+        }
+
+        if (subject == null) {
+            throw new IllegalArgumentException("Cannot determine subject for question. Please provide valid subUnitId or conceptId.");
         }
 
         // Load concepts
@@ -124,6 +164,7 @@ public class QuestionService {
         }
 
         question.setLevel(level);
+        question.setSubject(subject);
         question.setSubUnit(subUnit);
         question.setDifficulty(request.getDifficulty());
         question.setEvalDomain(request.getEvalDomain());

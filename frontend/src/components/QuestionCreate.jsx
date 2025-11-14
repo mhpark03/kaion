@@ -194,6 +194,7 @@ const QuestionCreate = () => {
         levelId: grade.levelId,
         subUnitId: subUnit.id,
         difficulty: formData.difficulty,
+        evalDomain: '이해/개념',  // Default evaluation domain
         questionText: aiPreview.questionText,
         questionType: formData.questionType,
         correctAnswer: aiPreview.correctAnswer,
