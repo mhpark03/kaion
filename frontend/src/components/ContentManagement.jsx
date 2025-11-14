@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { levelService } from '../services/levelService';
 import { gradeService } from '../services/gradeService';
 import { unitService } from '../services/unitService';
@@ -8,6 +9,7 @@ import Navbar from './Navbar';
 import './ContentManagement.css';
 
 const ContentManagement = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -133,29 +135,8 @@ const ContentManagement = () => {
     }
   };
 
-  const handleReorder = async (id, direction, type) => {
-    try {
-      switch (type) {
-        case 'level':
-          await levelService.reorder(id, direction);
-          break;
-        case 'grade':
-          await gradeService.reorder(id, direction);
-          break;
-        case 'unit':
-          await unitService.reorder(id, direction);
-          break;
-        case 'subunit':
-          await subUnitService.reorder(id, direction);
-          break;
-        case 'concept':
-          await conceptService.reorder(id, direction);
-          break;
-      }
-      loadAllData();
-    } catch (error) {
-      setError(error.response?.data || '순서 변경에 실패했습니다');
-    }
+  const handleAddQuestion = (conceptId) => {
+    navigate(`/question-create?conceptId=${conceptId}`);
   };
 
   const handleSubmit = async (e) => {
@@ -404,20 +385,15 @@ const ContentManagement = () => {
                       </>
                     )}
                     <td className="action-cell">
-                      <button
-                        onClick={() => handleReorder(item.id, 'up', type)}
-                        className="btn-order-small"
-                        disabled={index === 0}
-                      >
-                        ▲
-                      </button>
-                      <button
-                        onClick={() => handleReorder(item.id, 'down', type)}
-                        className="btn-order-small"
-                        disabled={index === items.length - 1}
-                      >
-                        ▼
-                      </button>
+                      {type === 'concept' && (
+                        <button
+                          onClick={() => handleAddQuestion(item.id)}
+                          className="btn-add-question"
+                          title="문제 추가"
+                        >
+                          문제 추가
+                        </button>
+                      )}
                       <button onClick={() => handleEdit(item, type)} className="btn-edit-small">
                         수정
                       </button>
