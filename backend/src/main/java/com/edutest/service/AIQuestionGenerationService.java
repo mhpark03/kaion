@@ -181,7 +181,7 @@ public class AIQuestionGenerationService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            log.info("Calling OpenAI GPT-4o mini API...");
+            log.info("Calling OpenAI GPT-5 nano API...");
             ResponseEntity<String> response = restTemplate.exchange(
                 openaiChatUrl,
                 HttpMethod.POST,
