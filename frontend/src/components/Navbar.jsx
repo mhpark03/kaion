@@ -46,23 +46,25 @@ const Navbar = () => {
               </span>
               {showContentDropdown && (
                 <div className="dropdown-menu">
-                  <div className="dropdown-item" onClick={() => navigate('/levels')}>
-                    교육과정
-                  </div>
-                  <div className="dropdown-item" onClick={() => navigate('/grades')}>
-                    학년
-                  </div>
-                  <div className="dropdown-item" onClick={() => navigate('/subjects')}>
-                    과목
-                  </div>
-                  <div className="dropdown-item" onClick={() => navigate('/units')}>
-                    대단원
-                  </div>
-                  <div className="dropdown-item" onClick={() => navigate('/sub-units')}>
-                    소단원
-                  </div>
-                  <div className="dropdown-item" onClick={() => navigate('/concepts')}>
-                    핵심 개념
+                  <div className="dropdown-menu-content">
+                    <div className="dropdown-item" onClick={() => navigate('/levels')}>
+                      교육과정
+                    </div>
+                    <div className="dropdown-item" onClick={() => navigate('/grades')}>
+                      학년
+                    </div>
+                    <div className="dropdown-item" onClick={() => navigate('/subjects')}>
+                      과목
+                    </div>
+                    <div className="dropdown-item" onClick={() => navigate('/units')}>
+                      대단원
+                    </div>
+                    <div className="dropdown-item" onClick={() => navigate('/sub-units')}>
+                      소단원
+                    </div>
+                    <div className="dropdown-item" onClick={() => navigate('/concepts')}>
+                      핵심 개념
+                    </div>
                   </div>
                 </div>
               )}
