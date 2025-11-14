@@ -4,53 +4,73 @@
   margin: 0 auto;
 }
 
-.quick-add-buttons {
+.page-header {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 30px;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  padding-bottom: 16px;
+  border-bottom: 3px solid #f1f3f5;
 }
 
-.quick-add-btn {
-  flex: 1;
-  padding: 14px 20px;
+.page-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+.icon-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
   background: white;
-  color: #333;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
+  color: white;
+  border: 2px solid;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.quick-add-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.icon-btn:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.quick-add-btn.level {
-  border-left: 4px solid #667eea;
+.icon-btn.level {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
 }
 
-.quick-add-btn.grade {
-  border-left: 4px solid #f093fb;
+.icon-btn.grade {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-color: #f093fb;
 }
 
-.quick-add-btn.unit {
-  border-left: 4px solid #4facfe;
+.icon-btn.unit {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  border-color: #4facfe;
 }
 
-.quick-add-btn.subunit {
-  border-left: 4px solid #43e97b;
+.icon-btn.subunit {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  border-color: #43e97b;
 }
 
-.quick-add-btn.concept {
-  border-left: 4px solid #fa709a;
+.icon-btn.concept {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  border-color: #fa709a;
 }
 
 .content-sections {
