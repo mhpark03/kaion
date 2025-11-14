@@ -30,23 +30,20 @@ public class AIQuestionGenerationService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Value("${ai.anthropic.api-key}")
-    private String anthropicApiKey;
-
-    @Value("${ai.anthropic.api-url}")
-    private String anthropicApiUrl;
-
-    @Value("${ai.anthropic.model}")
-    private String anthropicModel;
-
     @Value("${ai.openai.api-key}")
     private String openaiApiKey;
+
+    @Value("${ai.openai.chat-url}")
+    private String openaiChatUrl;
+
+    @Value("${ai.openai.chat-model}")
+    private String openaiChatModel;
 
     @Value("${ai.openai.image-generation-url}")
     private String openaiImageUrl;
 
-    @Value("${ai.openai.model}")
-    private String openaiModel;
+    @Value("${ai.openai.image-model}")
+    private String openaiImageModel;
 
     @Value("${file.upload-dir}")
     private String uploadDir;
@@ -60,17 +57,18 @@ public class AIQuestionGenerationService {
         Concept concept = conceptRepository.findById(request.getConceptId())
                 .orElseThrow(() -> new IllegalArgumentException("Concept not found"));
 
-        // Build the prompt for Claude
+        // Build the prompt for OpenAI
         String systemPrompt = buildSystemPrompt(concept, request);
+        String userPrompt = buildUserPrompt(request, referenceDocument);
 
-        // Prepare content with image and document if provided
-        List<Map<String, Object>> contentParts = new ArrayList<>();
+        // Prepare user message content with image and document if provided
+        List<Map<String, Object>> userContentParts = new ArrayList<>();
 
         // Add text prompt
         Map<String, Object> textContent = new HashMap<>();
         textContent.put("type", "text");
-        textContent.put("text", buildUserPrompt(request, referenceDocument));
-        contentParts.add(textContent);
+        textContent.put("text", userPrompt);
+        userContentParts.add(textContent);
 
         // Add image if provided
         if (referenceImage != null && !referenceImage.isEmpty()) {
@@ -78,20 +76,18 @@ public class AIQuestionGenerationService {
             String mediaType = referenceImage.getContentType();
 
             Map<String, Object> imageContent = new HashMap<>();
-            imageContent.put("type", "image");
-            Map<String, Object> imageSource = new HashMap<>();
-            imageSource.put("type", "base64");
-            imageSource.put("media_type", mediaType);
-            imageSource.put("data", base64Image);
-            imageContent.put("source", imageSource);
-            contentParts.add(imageContent);
+            imageContent.put("type", "image_url");
+            Map<String, Object> imageUrl = new HashMap<>();
+            imageUrl.put("url", "data:" + mediaType + ";base64," + base64Image);
+            imageContent.put("image_url", imageUrl);
+            userContentParts.add(imageContent);
         }
 
-        // Call Claude API
-        String claudeResponse = callClaudeAPI(systemPrompt, contentParts);
+        // Call OpenAI API
+        String openaiResponse = callOpenAIAPI(systemPrompt, userContentParts);
 
         // Parse response
-        AIQuestionGenerationResponse response = parseClaudeResponse(claudeResponse);
+        AIQuestionGenerationResponse response = parseOpenAIResponse(openaiResponse);
 
         // Generate image if requested
         if (request.isGenerateImage()) {
@@ -156,31 +152,38 @@ public class AIQuestionGenerationService {
         return prompt.toString();
     }
 
-    private String callClaudeAPI(String systemPrompt, List<Map<String, Object>> contentParts) {
+    private String callOpenAIAPI(String systemPrompt, List<Map<String, Object>> userContentParts) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.set("x-api-key", anthropicApiKey);
-            headers.set("anthropic-version", "2023-06-01");
+            headers.setBearerAuth(openaiApiKey);
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", anthropicModel);
+            requestBody.put("model", openaiChatModel);
             requestBody.put("max_tokens", 2048);
-            requestBody.put("system", systemPrompt);
+            requestBody.put("temperature", 0.7);
 
             List<Map<String, Object>> messages = new ArrayList<>();
+
+            // System message
+            Map<String, Object> systemMessage = new HashMap<>();
+            systemMessage.put("role", "system");
+            systemMessage.put("content", systemPrompt);
+            messages.add(systemMessage);
+
+            // User message with content (text + optional image)
             Map<String, Object> userMessage = new HashMap<>();
             userMessage.put("role", "user");
-            userMessage.put("content", contentParts);
+            userMessage.put("content", userContentParts);
             messages.add(userMessage);
 
             requestBody.put("messages", messages);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
-            log.info("Calling Claude API...");
+            log.info("Calling OpenAI GPT-4o mini API...");
             ResponseEntity<String> response = restTemplate.exchange(
-                anthropicApiUrl,
+                openaiChatUrl,
                 HttpMethod.POST,
                 entity,
                 String.class
@@ -188,16 +191,16 @@ public class AIQuestionGenerationService {
 
             return response.getBody();
         } catch (Exception e) {
-            log.error("Error calling Claude API", e);
+            log.error("Error calling OpenAI API", e);
             throw new RuntimeException("Failed to generate question with AI: " + e.getMessage());
         }
     }
 
-    private AIQuestionGenerationResponse parseClaudeResponse(String responseJson) {
+    private AIQuestionGenerationResponse parseOpenAIResponse(String responseJson) {
         try {
             JsonNode root = objectMapper.readTree(responseJson);
-            JsonNode content = root.path("content").get(0).path("text");
-            String textResponse = content.asText();
+            JsonNode messageContent = root.path("choices").get(0).path("message").path("content");
+            String textResponse = messageContent.asText();
 
             // Extract JSON from response
             int jsonStart = textResponse.indexOf("{");
@@ -212,10 +215,10 @@ public class AIQuestionGenerationService {
                         .explanation(questionData.path("explanation").asText())
                         .build();
             } else {
-                throw new RuntimeException("Invalid JSON response from Claude");
+                throw new RuntimeException("Invalid JSON response from OpenAI");
             }
         } catch (Exception e) {
-            log.error("Error parsing Claude response", e);
+            log.error("Error parsing OpenAI response", e);
             throw new RuntimeException("Failed to parse AI response: " + e.getMessage());
         }
     }
@@ -235,7 +238,7 @@ public class AIQuestionGenerationService {
             );
 
             Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", openaiModel);
+            requestBody.put("model", openaiImageModel);
             requestBody.put("prompt", imagePrompt);
             requestBody.put("n", 1);
             requestBody.put("size", "1024x1024");
