@@ -15,5 +15,10 @@ export const questionService = {
       'Content-Type': 'multipart/form-data'
     }
   }),
-  delete: (id) => api.delete(`/questions/${id}`)
+  delete: (id) => api.delete(`/questions/${id}`),
+  generateWithAI: (formData) => api.post('/questions/generate-ai', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
 };

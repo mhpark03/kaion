@@ -23,6 +23,17 @@ spring:
 file:
   upload-dir: uploads/questions
 
+# AI API configuration
+ai:
+  anthropic:
+    api-key: ${ANTHROPIC_API_KEY:your-anthropic-api-key-here}
+    api-url: https://api.anthropic.com/v1/messages
+    model: claude-3-5-sonnet-20241022
+  openai:
+    api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+    image-generation-url: https://api.openai.com/v1/images/generations
+    model: dall-e-3
+
 # JWT 설정
 jwt:
   secret: your-secret-key-change-this-in-production-minimum-256-bits
