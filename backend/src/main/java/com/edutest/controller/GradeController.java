@@ -61,4 +61,14 @@ public class GradeController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/reorder")
+    public ResponseEntity<?> reorderGrade(@PathVariable Long id, @RequestParam String direction) {
+        try {
+            gradeService.reorderGrade(id, direction);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

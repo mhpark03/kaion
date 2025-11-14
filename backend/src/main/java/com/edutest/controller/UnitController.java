@@ -61,4 +61,14 @@ public class UnitController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/reorder")
+    public ResponseEntity<?> reorderUnit(@PathVariable Long id, @RequestParam String direction) {
+        try {
+            unitService.reorderUnit(id, direction);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

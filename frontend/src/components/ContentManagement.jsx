@@ -20,6 +20,7 @@ const ContentManagement = () => {
 
   // Modal states
   const [showModal, setShowModal] = useState(false);
+  const [showLevelListModal, setShowLevelListModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [modalType, setModalType] = useState(''); // 'level', 'grade', 'unit', 'subunit', 'concept'
   const [formData, setFormData] = useState({});
@@ -53,7 +54,18 @@ const ContentManagement = () => {
   };
 
   const openCreateModal = (type) => {
-    setModalType(type);
+    if (type === 'level') {
+      setShowLevelListModal(true);
+    } else {
+      setModalType(type);
+      setEditingItem(null);
+      setFormData({});
+      setShowModal(true);
+    }
+  };
+
+  const openLevelFormModal = () => {
+    setModalType('level');
     setEditingItem(null);
     setFormData({});
     setShowModal(true);
@@ -90,6 +102,31 @@ const ContentManagement = () => {
       loadAllData();
     } catch (error) {
       setError(error.response?.data || '삭제에 실패했습니다');
+    }
+  };
+
+  const handleReorder = async (id, direction, type) => {
+    try {
+      switch (type) {
+        case 'level':
+          await levelService.reorder(id, direction);
+          break;
+        case 'grade':
+          await gradeService.reorder(id, direction);
+          break;
+        case 'unit':
+          await unitService.reorder(id, direction);
+          break;
+        case 'subunit':
+          await subUnitService.reorder(id, direction);
+          break;
+        case 'concept':
+          await conceptService.reorder(id, direction);
+          break;
+      }
+      loadAllData();
+    } catch (error) {
+      setError(error.response?.data || '순서 변경에 실패했습니다');
     }
   };
 
@@ -238,7 +275,7 @@ const ContentManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <tr key={item.id}>
                     <td>{type === 'level' ? (item.displayName || item.name) : item.levelDisplayName}</td>
                     {type === 'grade' && <td className="name-cell">{item.displayName || item.name}</td>}
@@ -265,6 +302,20 @@ const ContentManagement = () => {
                       </>
                     )}
                     <td className="action-cell">
+                      <button
+                        onClick={() => handleReorder(item.id, 'up', type)}
+                        className="btn-order-small"
+                        disabled={index === 0}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        onClick={() => handleReorder(item.id, 'down', type)}
+                        className="btn-order-small"
+                        disabled={index === items.length - 1}
+                      >
+                        ▼
+                      </button>
                       <button onClick={() => handleEdit(item, type)} className="btn-edit-small">
                         수정
                       </button>
@@ -362,33 +413,6 @@ const ContentManagement = () => {
             required
           />
         </div>
-        <div className="form-group">
-          <label>표시 이름</label>
-          <input
-            type="text"
-            value={formData.displayName || ''}
-            onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label>설명</label>
-          <textarea
-            value={formData.description || ''}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows="3"
-          />
-        </div>
-        <div className="form-group">
-          <label>순서</label>
-          <input
-            type="number"
-            value={formData.orderIndex || 0}
-            onChange={(e) => setFormData({ ...formData, orderIndex: parseInt(e.target.value) })}
-            required
-            min="0"
-          />
-        </div>
         <div className="modal-actions">
           <button type="button" onClick={() => setShowModal(false)} className="btn-cancel">
             취소
@@ -441,7 +465,6 @@ const ContentManagement = () => {
           <div className="loading">로딩 중...</div>
         ) : (
           <div className="content-sections">
-            {renderTable('교육과정', levels, 'level')}
             {renderTable('학년', getEnrichedGrades(), 'grade')}
             {renderTable('대단원', getEnrichedUnits(), 'unit')}
             {renderTable('소단원', getEnrichedSubUnits(), 'subunit')}
@@ -455,6 +478,62 @@ const ContentManagement = () => {
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>{editingItem ? `${getModalTitle()} 수정` : `${getModalTitle()} 추가`}</h2>
             {renderForm()}
+          </div>
+        </div>
+      )}
+
+      {showLevelListModal && (
+        <div className="modal-overlay" onClick={() => setShowLevelListModal(false)}>
+          <div className="modal-content modal-content-wide" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>교육과정 관리</h2>
+              <button onClick={openLevelFormModal} className="btn-add-modal">
+                + 추가
+              </button>
+            </div>
+            {levels.length === 0 ? (
+              <div className="empty-section">등록된 교육과정이 없습니다</div>
+            ) : (
+              <div className="table-wrapper">
+                <table className="content-table">
+                  <thead>
+                    <tr>
+                      <th>교육과정</th>
+                      <th className="action-header">동작</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {levels.map((item, index) => (
+                      <tr key={item.id}>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                        <td className="action-cell">
+                          <button
+                            onClick={() => handleReorder(item.id, 'up', 'level')}
+                            className="btn-order-small"
+                            disabled={index === 0}
+                          >
+                            ▲
+                          </button>
+                          <button
+                            onClick={() => handleReorder(item.id, 'down', 'level')}
+                            className="btn-order-small"
+                            disabled={index === levels.length - 1}
+                          >
+                            ▼
+                          </button>
+                          <button onClick={() => handleEdit(item, 'level')} className="btn-edit-small">
+                            수정
+                          </button>
+                          <button onClick={() => handleDelete(item.id, 'level')} className="btn-delete-small">
+                            삭제
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}

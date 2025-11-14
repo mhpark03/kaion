@@ -56,4 +56,14 @@ public class ConceptController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/reorder")
+    public ResponseEntity<?> reorderConcept(@PathVariable Long id, @RequestParam String direction) {
+        try {
+            conceptService.reorderConcept(id, direction);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

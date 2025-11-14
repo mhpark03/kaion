@@ -97,6 +97,42 @@ public class GradeService {
         gradeRepository.deleteById(id);
     }
 
+    @Transactional
+    public void reorderGrade(Long id, String direction) {
+        Grade currentGrade = gradeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + id));
+
+        List<Grade> gradesInLevel = gradeRepository.findByLevelIdOrderByOrderIndexAsc(currentGrade.getLevel().getId());
+        int currentIndex = -1;
+
+        for (int i = 0; i < gradesInLevel.size(); i++) {
+            if (gradesInLevel.get(i).getId().equals(id)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex == -1) {
+            throw new IllegalArgumentException("Grade not found in ordered list");
+        }
+
+        Grade swapGrade = null;
+        if ("up".equals(direction) && currentIndex > 0) {
+            swapGrade = gradesInLevel.get(currentIndex - 1);
+        } else if ("down".equals(direction) && currentIndex < gradesInLevel.size() - 1) {
+            swapGrade = gradesInLevel.get(currentIndex + 1);
+        }
+
+        if (swapGrade != null) {
+            Integer tempOrder = currentGrade.getOrderIndex();
+            currentGrade.setOrderIndex(swapGrade.getOrderIndex());
+            swapGrade.setOrderIndex(tempOrder);
+
+            gradeRepository.save(currentGrade);
+            gradeRepository.save(swapGrade);
+        }
+    }
+
     private GradeDto convertToDto(Grade grade) {
         return GradeDto.builder()
                 .id(grade.getId())

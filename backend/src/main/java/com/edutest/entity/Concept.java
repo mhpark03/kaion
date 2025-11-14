@@ -33,6 +33,14 @@ public class Concept {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_unit_id")
+    private SubUnit subUnit;
+
+    @Column(name = "order_index", nullable = false)
+    @Builder.Default
+    private Integer orderIndex = 0;
+
     @ManyToMany(mappedBy = "concepts")
     @Builder.Default
     private Set<Question> questions = new HashSet<>();

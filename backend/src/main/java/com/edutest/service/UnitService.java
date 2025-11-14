@@ -87,6 +87,42 @@ public class UnitService {
         unitRepository.deleteById(id);
     }
 
+    @Transactional
+    public void reorderUnit(Long id, String direction) {
+        Unit currentUnit = unitRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Unit not found with id: " + id));
+
+        List<Unit> unitsInGrade = unitRepository.findByGradeIdOrderByOrderIndexAsc(currentUnit.getGrade().getId());
+        int currentIndex = -1;
+
+        for (int i = 0; i < unitsInGrade.size(); i++) {
+            if (unitsInGrade.get(i).getId().equals(id)) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        if (currentIndex == -1) {
+            throw new IllegalArgumentException("Unit not found in ordered list");
+        }
+
+        Unit swapUnit = null;
+        if ("up".equals(direction) && currentIndex > 0) {
+            swapUnit = unitsInGrade.get(currentIndex - 1);
+        } else if ("down".equals(direction) && currentIndex < unitsInGrade.size() - 1) {
+            swapUnit = unitsInGrade.get(currentIndex + 1);
+        }
+
+        if (swapUnit != null) {
+            Integer tempOrder = currentUnit.getOrderIndex();
+            currentUnit.setOrderIndex(swapUnit.getOrderIndex());
+            swapUnit.setOrderIndex(tempOrder);
+
+            unitRepository.save(currentUnit);
+            unitRepository.save(swapUnit);
+        }
+    }
+
     private UnitDto convertToDto(Unit unit) {
         return UnitDto.builder()
                 .id(unit.getId())

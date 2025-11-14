@@ -61,4 +61,14 @@ public class SubUnitController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @PutMapping("/{id}/reorder")
+    public ResponseEntity<?> reorderSubUnit(@PathVariable Long id, @RequestParam String direction) {
+        try {
+            subUnitService.reorderSubUnit(id, direction);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }
