@@ -31,9 +31,14 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Enumerated(EnumType.STRING)
+    @Column(name = "full_name", length = 100)
+    private String fullName;
+
     @Column(nullable = false)
-    private Role role = Role.STUDENT;
+    private Boolean active = true;
+
+    @Column(nullable = false, length = 20)
+    private String role = "STUDENT";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -42,8 +47,4 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
-
-    public enum Role {
-        STUDENT, TEACHER, ADMIN
-    }
 }

@@ -39,8 +39,9 @@ public class LevelService {
 
         Level level = Level.builder()
                 .name(dto.getName())
+                .displayName(dto.getName())
                 .description(dto.getDescription())
-                .difficultyRank(dto.getDifficultyRank())
+                .orderIndex(dto.getDifficultyRank())
                 .build();
 
         Level saved = levelRepository.save(level);
@@ -60,8 +61,9 @@ public class LevelService {
         });
 
         level.setName(dto.getName());
+        level.setDisplayName(dto.getName());
         level.setDescription(dto.getDescription());
-        level.setDifficultyRank(dto.getDifficultyRank());
+        level.setOrderIndex(dto.getDifficultyRank());
 
         Level updated = levelRepository.save(level);
         return convertToDto(updated);
@@ -80,7 +82,7 @@ public class LevelService {
                 .id(level.getId())
                 .name(level.getName())
                 .description(level.getDescription())
-                .difficultyRank(level.getDifficultyRank())
+                .difficultyRank(level.getOrderIndex())
                 .build();
     }
 }
