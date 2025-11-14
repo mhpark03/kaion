@@ -33,11 +33,16 @@ public class UserService {
         }
 
         // Create new user
+        // fullName이 없으면 username을 사용
+        String fullName = (request.getFullName() != null && !request.getFullName().isEmpty())
+                ? request.getFullName()
+                : request.getUsername();
+
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
-                .fullName(request.getFullName())
+                .fullName(fullName)
                 .role(request.getRole() != null ? request.getRole() : "STUDENT")
                 .active(true)
                 .build();

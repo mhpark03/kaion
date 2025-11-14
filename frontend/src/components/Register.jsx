@@ -9,7 +9,6 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     email: '',
-    fullName: '',
     role: 'STUDENT'
   });
   const [error, setError] = useState('');
@@ -42,7 +41,9 @@ const Register = () => {
 
     setLoading(true);
 
+    // username을 fullName으로도 사용
     const { confirmPassword, ...registerData } = formData;
+    registerData.fullName = registerData.username;
     const result = await register(registerData);
 
     if (result.success) {
@@ -62,13 +63,14 @@ const Register = () => {
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-group">
-            <label htmlFor="username">사용자명</label>
+            <label htmlFor="username">이름</label>
             <input
               type="text"
               id="username"
               name="username"
               value={formData.username}
               onChange={handleChange}
+              placeholder="홍길동"
               required
               disabled={loading}
             />
@@ -82,19 +84,7 @@ const Register = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              required
-              disabled={loading}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="fullName">이름</label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
+              placeholder="example@email.com"
               required
               disabled={loading}
             />
