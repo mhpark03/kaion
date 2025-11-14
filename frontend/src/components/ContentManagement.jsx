@@ -61,6 +61,25 @@ const ContentManagement = () => {
   };
 
   const openCreateModal = (type) => {
+    // Check if required parent items exist
+    if (type === 'grade' && levels.length === 0) {
+      setError('교육과정을 먼저 추가해주세요');
+      return;
+    }
+    if (type === 'unit' && grades.length === 0) {
+      setError('학년을 먼저 추가해주세요');
+      return;
+    }
+    if (type === 'subunit' && units.length === 0) {
+      setError('대단원을 먼저 추가해주세요');
+      return;
+    }
+    if (type === 'concept' && subUnits.length === 0) {
+      setError('소단원을 먼저 추가해주세요');
+      return;
+    }
+
+    setError('');
     setListModalType(type);
     setSelectedFilters({
       levelId: '',
@@ -511,9 +530,14 @@ const ContentManagement = () => {
           <div className="modal-content modal-content-wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>{getModalTitle(listModalType)} 관리</h2>
-              <button onClick={() => openFormModal(listModalType)} className="btn-add-modal">
-                + 추가
-              </button>
+              <div className="modal-header-buttons">
+                <button onClick={() => setShowListModal(false)} className="btn-cancel-modal">
+                  취소
+                </button>
+                <button onClick={() => openFormModal(listModalType)} className="btn-add-modal">
+                  + 추가
+                </button>
+              </div>
             </div>
 
             {/* Filter Section */}

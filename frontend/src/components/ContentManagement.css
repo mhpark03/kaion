@@ -303,6 +303,27 @@
   color: #333;
 }
 
+.modal-header-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-cancel-modal {
+  padding: 8px 16px;
+  background: #f5f5f5;
+  color: #666;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel-modal:hover {
+  background: #e0e0e0;
+}
+
 .btn-add-modal {
   padding: 8px 16px;
   background: #2196F3;
