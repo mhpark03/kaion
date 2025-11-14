@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { questionService } from '../services/questionService';
 import { levelService } from '../services/levelService';
 import Navbar from './Navbar';
 import './Management.css';
 
 const QuestionManagement = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [questions, setQuestions] = useState([]);
   const [levels, setLevels] = useState([]);
@@ -165,7 +166,7 @@ const QuestionManagement = () => {
       <div className="management-content">
         <div className="management-header">
           <h1>문제 관리</h1>
-          <button onClick={openCreateModal} className="btn-create">
+          <button onClick={() => navigate('/question-create')} className="btn-create">
             + 새 문제
           </button>
         </div>

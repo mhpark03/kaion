@@ -189,7 +189,7 @@ const QuestionCreate = () => {
       <div className="question-create-content">
         <div className="page-header">
           <h1>문제 생성</h1>
-          <button onClick={() => navigate('/questions')} className="btn-back">
+          <button onClick={() => navigate(-1)} className="btn-back">
             목록으로
           </button>
         </div>
@@ -379,7 +379,7 @@ const QuestionCreate = () => {
           </div>
 
           <div className="form-actions">
-            <button type="button" onClick={() => navigate('/questions')} className="btn-cancel">
+            <button type="button" onClick={() => navigate(-1)} className="btn-cancel">
               취소
             </button>
             <button type="submit" className="btn-submit">
