@@ -58,8 +58,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
-                        .requestMatchers("/api/subjects/**").permitAll()
                         .requestMatchers("/api/levels/**").permitAll()
+                        .requestMatchers("/api/grades/**").permitAll()
+                        .requestMatchers("/api/subjects/**").permitAll()
+                        .requestMatchers("/api/units/**").permitAll()
+                        .requestMatchers("/api/sub-units/**").permitAll()
+                        .requestMatchers("/api/concepts/**").permitAll()
                         .requestMatchers("/api/questions/**").permitAll()
                         .anyRequest().authenticated()
                 );
