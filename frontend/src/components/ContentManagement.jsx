@@ -143,25 +143,76 @@ const ContentManagement = () => {
     }
   };
 
-  // Calculate child count for each item
-  const getChildCount = (item, type) => {
-    switch (type) {
-      case 'level':
-        return grades.filter(g => g.levelId === item.id).length;
-      case 'grade':
-        return units.filter(u => u.gradeId === item.id).length;
-      case 'unit':
-        return subUnits.filter(su => su.unitId === item.id).length;
-      case 'subunit':
-        return concepts.filter(c => c.subUnitId === item.id).length;
-      case 'concept':
-        return 0;
-      default:
-        return 0;
-    }
+  // Get full hierarchy path for items
+  const getLevelName = (levelId) => {
+    const level = levels.find(l => l.id === levelId);
+    return level ? (level.displayName || level.name) : '-';
   };
 
-  const renderTable = (title, items, type, columns) => {
+  const getGradeName = (gradeId) => {
+    const grade = grades.find(g => g.id === gradeId);
+    return grade ? (grade.displayName || grade.name) : '-';
+  };
+
+  const getUnitName = (unitId) => {
+    const unit = units.find(u => u.id === unitId);
+    return unit ? (unit.displayName || unit.name) : '-';
+  };
+
+  const getSubUnitName = (subUnitId) => {
+    const subUnit = subUnits.find(su => su.id === subUnitId);
+    return subUnit ? (subUnit.displayName || subUnit.name) : '-';
+  };
+
+  // Get enriched data with full hierarchy
+  const getEnrichedGrades = () => {
+    return grades.map(grade => ({
+      ...grade,
+      levelDisplayName: getLevelName(grade.levelId)
+    }));
+  };
+
+  const getEnrichedUnits = () => {
+    return units.map(unit => {
+      const grade = grades.find(g => g.id === unit.gradeId);
+      return {
+        ...unit,
+        gradeDisplayName: getGradeName(unit.gradeId),
+        levelDisplayName: grade ? getLevelName(grade.levelId) : '-'
+      };
+    });
+  };
+
+  const getEnrichedSubUnits = () => {
+    return subUnits.map(subUnit => {
+      const unit = units.find(u => u.id === subUnit.unitId);
+      const grade = unit ? grades.find(g => g.id === unit.gradeId) : null;
+      return {
+        ...subUnit,
+        unitDisplayName: getUnitName(subUnit.unitId),
+        gradeDisplayName: unit ? getGradeName(unit.gradeId) : '-',
+        levelDisplayName: grade ? getLevelName(grade.levelId) : '-'
+      };
+    });
+  };
+
+  const getEnrichedConcepts = () => {
+    return concepts.map(concept => {
+      const subUnit = subUnits.find(su => su.id === concept.subUnitId);
+      const unit = subUnit ? units.find(u => u.id === subUnit.unitId) : null;
+      const grade = unit ? grades.find(g => g.id === unit.gradeId) : null;
+      return {
+        ...concept,
+        subUnitDisplayName: getSubUnitName(concept.subUnitId),
+        unitDisplayName: unit ? getUnitName(unit.id) : '-',
+        gradeDisplayName: unit ? getGradeName(unit.gradeId) : '-',
+        levelDisplayName: grade ? getLevelName(grade.levelId) : '-',
+        questionCount: 0 // TODO: 실제 문제 개수를 가져오도록 구현
+      };
+    });
+  };
+
+  const renderTable = (title, items, type) => {
     return (
       <div className="content-section">
         <div className="section-header">
@@ -177,30 +228,42 @@ const ContentManagement = () => {
             <table className="content-table">
               <thead>
                 <tr>
-                  {columns.map((col, idx) => (
-                    <th key={idx}>{col}</th>
-                  ))}
-                  <th className="count-header">하위 항목</th>
+                  <th>교육과정</th>
+                  {type !== 'level' && <th>학년</th>}
+                  {(type === 'unit' || type === 'subunit' || type === 'concept') && <th>대단원</th>}
+                  {(type === 'subunit' || type === 'concept') && <th>소단원</th>}
+                  {type === 'concept' && <th>핵심개념</th>}
+                  {type === 'concept' && <th className="count-header">문제수</th>}
                   <th className="action-header">동작</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id}>
-                    {type === 'grade' && (
-                      <td>{item.levelName || '-'}</td>
-                    )}
+                    <td>{type === 'level' ? (item.displayName || item.name) : item.levelDisplayName}</td>
+                    {type === 'grade' && <td className="name-cell">{item.displayName || item.name}</td>}
                     {type === 'unit' && (
-                      <td>{item.gradeName || '-'}</td>
+                      <>
+                        <td>{item.gradeDisplayName}</td>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                      </>
                     )}
                     {type === 'subunit' && (
-                      <td>{item.unitName || '-'}</td>
+                      <>
+                        <td>{item.gradeDisplayName}</td>
+                        <td>{item.unitDisplayName}</td>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                      </>
                     )}
                     {type === 'concept' && (
-                      <td>{item.subUnitName || '-'}</td>
+                      <>
+                        <td>{item.gradeDisplayName}</td>
+                        <td>{item.unitDisplayName}</td>
+                        <td>{item.subUnitDisplayName}</td>
+                        <td className="name-cell">{item.displayName || item.name}</td>
+                        <td className="count-cell">{item.questionCount}</td>
+                      </>
                     )}
-                    <td className="name-cell">{item.displayName || item.name}</td>
-                    <td className="count-cell">{getChildCount(item, type)}</td>
                     <td className="action-cell">
                       <button onClick={() => handleEdit(item, type)} className="btn-edit-small">
                         수정
@@ -378,11 +441,11 @@ const ContentManagement = () => {
           <div className="loading">로딩 중...</div>
         ) : (
           <div className="content-sections">
-            {renderTable('교육과정', levels, 'level', ['이름'])}
-            {renderTable('학년', grades, 'grade', ['교육과정', '이름'])}
-            {renderTable('대단원', units, 'unit', ['학년', '이름'])}
-            {renderTable('소단원', subUnits, 'subunit', ['대단원', '이름'])}
-            {renderTable('핵심 개념', concepts, 'concept', ['소단원', '이름'])}
+            {renderTable('교육과정', levels, 'level')}
+            {renderTable('학년', getEnrichedGrades(), 'grade')}
+            {renderTable('대단원', getEnrichedUnits(), 'unit')}
+            {renderTable('소단원', getEnrichedSubUnits(), 'subunit')}
+            {renderTable('핵심 개념', getEnrichedConcepts(), 'concept')}
           </div>
         )}
       </div>
