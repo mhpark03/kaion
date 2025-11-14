@@ -29,16 +29,32 @@ const Navbar = () => {
 
         {(user?.role === 'ADMIN' || user?.role === 'TEACHER') && (
           <>
-            <div className="navbar-item" onClick={() => navigate('/subjects')}>
-              <span className={`nav-link ${isActive('/subjects')}`}>과목 관리</span>
+            <div className="navbar-item" onClick={() => navigate('/levels')}>
+              <span className={`nav-link ${isActive('/levels')}`}>교육과정</span>
             </div>
 
-            <div className="navbar-item" onClick={() => navigate('/levels')}>
-              <span className={`nav-link ${isActive('/levels')}`}>난이도 관리</span>
+            <div className="navbar-item" onClick={() => navigate('/grades')}>
+              <span className={`nav-link ${isActive('/grades')}`}>학년</span>
+            </div>
+
+            <div className="navbar-item" onClick={() => navigate('/subjects')}>
+              <span className={`nav-link ${isActive('/subjects')}`}>과목</span>
+            </div>
+
+            <div className="navbar-item" onClick={() => navigate('/units')}>
+              <span className={`nav-link ${isActive('/units')}`}>대단원</span>
+            </div>
+
+            <div className="navbar-item" onClick={() => navigate('/sub-units')}>
+              <span className={`nav-link ${isActive('/sub-units')}`}>소단원</span>
+            </div>
+
+            <div className="navbar-item" onClick={() => navigate('/concepts')}>
+              <span className={`nav-link ${isActive('/concepts')}`}>핵심 개념</span>
             </div>
 
             <div className="navbar-item" onClick={() => navigate('/questions')}>
-              <span className={`nav-link ${isActive('/questions')}`}>문제 관리</span>
+              <span className={`nav-link ${isActive('/questions')}`}>문제</span>
             </div>
           </>
         )}
