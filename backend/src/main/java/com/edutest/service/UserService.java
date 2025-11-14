@@ -65,7 +65,9 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
+        // Try to find user by username first, then by email
         User user = userRepository.findByUsername(request.getUsername())
+                .or(() -> userRepository.findByEmail(request.getUsername()))
                 .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
