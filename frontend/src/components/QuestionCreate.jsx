@@ -34,9 +34,11 @@ const QuestionCreate = () => {
     questionText: '',
     questionType: 'MULTIPLE_CHOICE',
     correctAnswer: '',
-    points: 10,
     options: []
   });
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const difficultyLevels = [
     { value: 'VERY_EASY', label: '매우 쉬움' },
@@ -112,7 +114,28 @@ const QuestionCreate = () => {
     }
 
     try {
-      await questionService.create(formData);
+      // Find the concept to get level and subunit info
+      const concept = concepts.find(c => c.id === parseInt(formData.conceptId));
+      const subUnit = subUnits.find(su => su.id === concept.subUnitId);
+      const unit = units.find(u => u.id === subUnit.unitId);
+      const grade = grades.find(g => g.id === unit.gradeId);
+
+      const requestData = {
+        ...formData,
+        conceptIds: [parseInt(formData.conceptId)],
+        levelId: grade.levelId,
+        subUnitId: subUnit.id,
+        points: 10 // Default points
+      };
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('request', new Blob([JSON.stringify(requestData)], { type: 'application/json' }));
+
+      if (imageFile) {
+        formDataToSend.append('image', imageFile);
+      }
+
+      await questionService.createWithImage(formDataToSend);
       navigate('/questions');
     } catch (error) {
       setError(error.response?.data || '문제 생성에 실패했습니다');
@@ -178,6 +201,24 @@ const QuestionCreate = () => {
   const handleSubUnitChange = (subUnitId) => {
     setSelectedSubUnit(subUnitId);
     setFormData(prev => ({ ...prev, conceptId: '' }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   if (loading) return <div className="loading">로딩 중...</div>;
@@ -319,17 +360,24 @@ const QuestionCreate = () => {
                   <option value="ESSAY">서술형</option>
                 </select>
               </div>
+            </div>
 
-              <div className="form-group">
-                <label>배점 *</label>
-                <input
-                  type="number"
-                  value={formData.points}
-                  onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) })}
-                  required
-                  min="1"
-                />
-              </div>
+            <div className="form-group">
+              <label>참조 이미지 (선택)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="file-input"
+              />
+              {imagePreview && (
+                <div className="image-preview">
+                  <img src={imagePreview} alt="Preview" />
+                  <button type="button" onClick={removeImage} className="btn-remove-image">
+                    이미지 제거
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="form-group">

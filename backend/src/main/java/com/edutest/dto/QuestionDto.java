@@ -23,6 +23,7 @@ public class QuestionDto {
     private String questionType; // MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER, ESSAY
     private String correctAnswer;
     private Integer points;
+    private String referenceImage; // 참조 이미지 파일 경로
     private List<QuestionOptionDto> options;
     private List<ConceptDto> concepts;
 }

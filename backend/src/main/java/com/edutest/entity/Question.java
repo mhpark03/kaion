@@ -56,6 +56,9 @@ public class Question {
     @Column(name = "time_limit")
     private Integer timeLimit;
 
+    @Column(name = "reference_image")
+    private String referenceImage;  // 참조 이미지 파일 경로
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
