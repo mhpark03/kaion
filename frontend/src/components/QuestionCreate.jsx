@@ -33,7 +33,8 @@ const QuestionCreate = () => {
     difficulty: 'MEDIUM',
     questionText: '',
     questionType: 'MULTIPLE_CHOICE',
-    correctAnswer: ''
+    correctAnswer: '',
+    userPrompt: ''
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -41,6 +42,10 @@ const QuestionCreate = () => {
   const [documentFile, setDocumentFile] = useState(null);
   const [aiGenerating, setAiGenerating] = useState(false);
   const [generateImage, setGenerateImage] = useState(false);
+
+  // AI Preview State
+  const [aiPreview, setAiPreview] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const difficultyLevels = [
     { value: 'VERY_EASY', label: '매우 쉬움' },
@@ -55,11 +60,9 @@ const QuestionCreate = () => {
   }, []);
 
   useEffect(() => {
-    // Check if conceptId is passed from ContentManagement
     const conceptId = searchParams.get('conceptId');
     if (conceptId) {
       setFormData(prev => ({ ...prev, conceptId }));
-      // Find and set the hierarchy for this concept
       findConceptHierarchy(conceptId);
     }
   }, [searchParams, concepts, subUnits, units, grades, levels]);
@@ -106,7 +109,7 @@ const QuestionCreate = () => {
     setSelectedSubUnit(subUnit.id.toString());
   };
 
-  const handleSubmit = async (e) => {
+  const handleGenerateQuestion = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -115,23 +118,20 @@ const QuestionCreate = () => {
       return;
     }
 
-    try {
-      // Find the concept to get level and subunit info
-      const concept = concepts.find(c => c.id === parseInt(formData.conceptId));
-      const subUnit = subUnits.find(su => su.id === concept.subUnitId);
-      const unit = units.find(u => u.id === subUnit.unitId);
-      const grade = grades.find(g => g.id === unit.gradeId);
+    setAiGenerating(true);
 
-      const requestData = {
-        ...formData,
-        conceptIds: [parseInt(formData.conceptId)],
-        levelId: grade.levelId,
-        subUnitId: subUnit.id,
-        points: 10 // Default points
+    try {
+      const aiRequestData = {
+        conceptId: parseInt(formData.conceptId),
+        difficulty: formData.difficulty,
+        questionType: formData.questionType,
+        userPrompt: formData.userPrompt || '',
+        correctAnswer: formData.correctAnswer || '',
+        generateImage: generateImage
       };
 
       const formDataToSend = new FormData();
-      formDataToSend.append('request', new Blob([JSON.stringify(requestData)], { type: 'application/json' }));
+      formDataToSend.append('request', new Blob([JSON.stringify(aiRequestData)], { type: 'application/json' }));
 
       if (imageFile) {
         formDataToSend.append('image', imageFile);
@@ -141,13 +141,107 @@ const QuestionCreate = () => {
         formDataToSend.append('document', documentFile);
       }
 
-      await questionService.createWithImage(formDataToSend);
-      navigate('/questions');
+      const response = await questionService.generateWithAI(formDataToSend);
+
+      // Store AI result for preview
+      setAiPreview({
+        ...response.data,
+        generatedImageFile: null
+      });
+
+      // If AI generated an image, download it
+      if (response.data.generatedImageUrl) {
+        try {
+          const imageResponse = await fetch(response.data.generatedImageUrl);
+          const imageBlob = await imageResponse.blob();
+          const imageFile = new File([imageBlob], 'ai-generated-image.png', { type: 'image/png' });
+
+          setAiPreview(prev => ({
+            ...prev,
+            generatedImageFile: imageFile,
+            generatedImagePreview: URL.createObjectURL(imageBlob)
+          }));
+        } catch (imgError) {
+          console.error('Failed to download AI-generated image', imgError);
+        }
+      }
+
+      // Show preview modal
+      setShowPreview(true);
+
     } catch (error) {
-      setError(error.response?.data || '문제 생성에 실패했습니다');
+      setError(error.response?.data || 'AI 문제 생성에 실패했습니다');
+      console.error('AI generation error:', error);
+    } finally {
+      setAiGenerating(false);
     }
   };
 
+  const handleSaveQuestion = async () => {
+    if (!aiPreview) return;
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const concept = concepts.find(c => c.id === parseInt(formData.conceptId));
+      const subUnit = subUnits.find(su => su.id === concept.subUnitId);
+      const unit = units.find(u => u.id === subUnit.unitId);
+      const grade = grades.find(g => g.id === unit.gradeId);
+
+      const requestData = {
+        conceptIds: [parseInt(formData.conceptId)],
+        levelId: grade.levelId,
+        subUnitId: subUnit.id,
+        difficulty: formData.difficulty,
+        questionText: aiPreview.questionText,
+        questionType: formData.questionType,
+        correctAnswer: aiPreview.correctAnswer,
+        points: 10
+      };
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('request', new Blob([JSON.stringify(requestData)], { type: 'application/json' }));
+
+      // Include original reference files if provided
+      if (imageFile) {
+        formDataToSend.append('image', imageFile);
+      } else if (aiPreview.generatedImageFile) {
+        // Use AI-generated image if no reference image
+        formDataToSend.append('image', aiPreview.generatedImageFile);
+      }
+
+      if (documentFile) {
+        formDataToSend.append('document', documentFile);
+      }
+
+      await questionService.createWithImage(formDataToSend);
+      navigate('/questions');
+    } catch (error) {
+      setError(error.response?.data || '문제 저장에 실패했습니다');
+      setLoading(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setShowPreview(false);
+  };
+
+  const handleEditAndSave = () => {
+    // Fill form with AI data and close preview
+    setFormData(prev => ({
+      ...prev,
+      questionText: aiPreview.questionText,
+      correctAnswer: aiPreview.correctAnswer
+    }));
+
+    if (aiPreview.generatedImageFile && !imageFile) {
+      setImageFile(aiPreview.generatedImageFile);
+      setImagePreview(aiPreview.generatedImagePreview);
+    }
+
+    setShowPreview(false);
+  };
 
   // Filter data based on selections
   const filteredGrades = selectedLevel
@@ -196,7 +290,6 @@ const QuestionCreate = () => {
     const file = e.target.files[0];
     if (file) {
       setImageFile(file);
-      // Create preview
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result);
@@ -221,77 +314,6 @@ const QuestionCreate = () => {
     setDocumentFile(null);
   };
 
-  const handleAIGenerate = async () => {
-    if (!formData.conceptId) {
-      setError('핵심개념을 먼저 선택해주세요');
-      return;
-    }
-
-    setAiGenerating(true);
-    setError('');
-
-    try {
-      const aiRequestData = {
-        conceptId: parseInt(formData.conceptId),
-        difficulty: formData.difficulty,
-        questionType: formData.questionType,
-        userPrompt: formData.questionText || '',
-        correctAnswer: formData.correctAnswer || '',
-        generateImage: generateImage
-      };
-
-      const formDataToSend = new FormData();
-      formDataToSend.append('request', new Blob([JSON.stringify(aiRequestData)], { type: 'application/json' }));
-
-      if (imageFile) {
-        formDataToSend.append('image', imageFile);
-      }
-
-      if (documentFile) {
-        formDataToSend.append('document', documentFile);
-      }
-
-      const response = await questionService.generateWithAI(formDataToSend);
-
-      // Fill the form with AI-generated content
-      setFormData(prev => ({
-        ...prev,
-        questionText: response.data.questionText || prev.questionText,
-        correctAnswer: response.data.correctAnswer || prev.correctAnswer
-      }));
-
-      // If AI generated an image, download and set it
-      if (response.data.generatedImageUrl) {
-        try {
-          const imageResponse = await fetch(response.data.generatedImageUrl);
-          const imageBlob = await imageResponse.blob();
-          const imageFile = new File([imageBlob], 'ai-generated-image.png', { type: 'image/png' });
-          setImageFile(imageFile);
-
-          // Create preview
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setImagePreview(reader.result);
-          };
-          reader.readAsDataURL(imageFile);
-        } catch (imgError) {
-          console.error('Failed to download AI-generated image', imgError);
-        }
-      }
-
-      // Show explanation if available (you might want to display this in a modal or alert)
-      if (response.data.explanation) {
-        alert('AI 해설:\n\n' + response.data.explanation);
-      }
-
-    } catch (error) {
-      setError(error.response?.data || 'AI 문제 생성에 실패했습니다');
-      console.error('AI generation error:', error);
-    } finally {
-      setAiGenerating(false);
-    }
-  };
-
   if (loading) return <div className="loading">로딩 중...</div>;
 
   return (
@@ -300,7 +322,7 @@ const QuestionCreate = () => {
 
       <div className="question-create-content">
         <div className="page-header">
-          <h1>문제 생성</h1>
+          <h1>AI 문제 생성</h1>
           <button onClick={() => navigate(-1)} className="btn-back">
             목록으로
           </button>
@@ -308,7 +330,7 @@ const QuestionCreate = () => {
 
         {error && <div className="error-message">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="question-form">
+        <form onSubmit={handleGenerateQuestion} className="question-form">
           {/* Concept Selection Section */}
           <div className="form-section">
             <h2>핵심개념 선택</h2>
@@ -323,7 +345,7 @@ const QuestionCreate = () => {
                   <option value="">선택하세요</option>
                   {levels.map(level => (
                     <option key={level.id} value={level.id}>
-                      {level.name}
+                      {level.displayName}
                     </option>
                   ))}
                 </select>
@@ -340,7 +362,7 @@ const QuestionCreate = () => {
                   <option value="">선택하세요</option>
                   {filteredGrades.map(grade => (
                     <option key={grade.id} value={grade.id}>
-                      {grade.name}
+                      {grade.displayName}
                     </option>
                   ))}
                 </select>
@@ -357,14 +379,14 @@ const QuestionCreate = () => {
                   <option value="">선택하세요</option>
                   {filteredUnits.map(unit => (
                     <option key={unit.id} value={unit.id}>
-                      {unit.name}
+                      {unit.displayName}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="form-group">
-                <label>소단원</label>
+                <label>중단원</label>
                 <select
                   value={selectedSubUnit}
                   onChange={(e) => handleSubUnitChange(e.target.value)}
@@ -374,7 +396,7 @@ const QuestionCreate = () => {
                   <option value="">선택하세요</option>
                   {filteredSubUnits.map(subUnit => (
                     <option key={subUnit.id} value={subUnit.id}>
-                      {subUnit.name}
+                      {subUnit.displayName}
                     </option>
                   ))}
                 </select>
@@ -391,7 +413,7 @@ const QuestionCreate = () => {
                   <option value="">선택하세요</option>
                   {filteredConcepts.map(concept => (
                     <option key={concept.id} value={concept.id}>
-                      {concept.name}
+                      {concept.displayName}
                     </option>
                   ))}
                 </select>
@@ -399,31 +421,9 @@ const QuestionCreate = () => {
             </div>
           </div>
 
-          {/* Question Details Section */}
+          {/* Question Configuration Section */}
           <div className="form-section">
-            <div className="section-header">
-              <h2>문제 정보</h2>
-              <button
-                type="button"
-                onClick={handleAIGenerate}
-                disabled={!formData.conceptId || aiGenerating}
-                className="btn-ai-generate"
-              >
-                {aiGenerating ? '🤖 AI 생성 중...' : '🤖 AI로 문제 생성'}
-              </button>
-            </div>
-
-            <div className="ai-options">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={generateImage}
-                  onChange={(e) => setGenerateImage(e.target.checked)}
-                  disabled={aiGenerating}
-                />
-                <span>문제 관련 이미지도 함께 생성</span>
-              </label>
-            </div>
+            <h2>문제 설정</h2>
 
             <div className="form-row">
               <div className="form-group">
@@ -456,8 +456,45 @@ const QuestionCreate = () => {
               </div>
             </div>
 
+            <div className="ai-options">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={generateImage}
+                  onChange={(e) => setGenerateImage(e.target.checked)}
+                  disabled={aiGenerating}
+                />
+                <span>문제 관련 이미지도 함께 생성 (DALL-E 3)</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Optional Reference Materials */}
+          <div className="form-section">
+            <h2>참조 자료 (선택사항)</h2>
+
             <div className="form-group">
-              <label>참조 이미지 (선택)</label>
+              <label>사용자 프롬프트</label>
+              <textarea
+                value={formData.userPrompt}
+                onChange={(e) => setFormData({ ...formData, userPrompt: e.target.value })}
+                rows="4"
+                placeholder="AI에게 추가 요청사항을 입력하세요 (예: 실생활 예시 포함, 그래프 설명 포함 등)"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>정답 힌트</label>
+              <input
+                type="text"
+                value={formData.correctAnswer}
+                onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                placeholder="정답 가이드를 입력하세요"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>참조 이미지</label>
               <input
                 type="file"
                 accept="image/*"
@@ -475,7 +512,7 @@ const QuestionCreate = () => {
             </div>
 
             <div className="form-group">
-              <label>참조 문서 (선택)</label>
+              <label>참조 문서</label>
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,.hwp,.txt"
@@ -491,38 +528,73 @@ const QuestionCreate = () => {
                 </div>
               )}
             </div>
-
-            <div className="form-group">
-              <label>프롬프트 (선택)</label>
-              <textarea
-                value={formData.questionText}
-                onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
-                rows="5"
-                placeholder="프롬프트를 입력하세요"
-              />
-            </div>
-
-            <div className="form-group">
-              <label>정답 (선택)</label>
-              <input
-                type="text"
-                value={formData.correctAnswer}
-                onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
-                placeholder="정답을 입력하세요"
-              />
-            </div>
           </div>
 
           <div className="form-actions">
             <button type="button" onClick={() => navigate(-1)} className="btn-cancel">
               취소
             </button>
-            <button type="submit" className="btn-submit">
-              문제 생성
+            <button type="submit" disabled={!formData.conceptId || aiGenerating} className="btn-generate">
+              {aiGenerating ? '🤖 AI 생성 중...' : '🤖 AI 문제 생성'}
             </button>
           </div>
         </form>
       </div>
+
+      {/* AI Preview Modal */}
+      {showPreview && aiPreview && (
+        <div className="modal-overlay" onClick={handleClosePreview}>
+          <div className="modal-content preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>AI 생성 결과 미리보기</h2>
+              <button className="btn-close" onClick={handleClosePreview}>×</button>
+            </div>
+
+            <div className="modal-body">
+              <div className="preview-section">
+                <h3>문제</h3>
+                <div className="preview-content">
+                  {aiPreview.questionText}
+                </div>
+              </div>
+
+              <div className="preview-section">
+                <h3>정답</h3>
+                <div className="preview-content answer">
+                  {aiPreview.correctAnswer}
+                </div>
+              </div>
+
+              {aiPreview.explanation && (
+                <div className="preview-section">
+                  <h3>해설</h3>
+                  <div className="preview-content explanation">
+                    {aiPreview.explanation}
+                  </div>
+                </div>
+              )}
+
+              {aiPreview.generatedImagePreview && (
+                <div className="preview-section">
+                  <h3>AI 생성 이미지</h3>
+                  <div className="preview-image">
+                    <img src={aiPreview.generatedImagePreview} alt="AI Generated" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={handleEditAndSave}>
+                수정 후 저장
+              </button>
+              <button className="btn-primary" onClick={handleSaveQuestion} disabled={loading}>
+                {loading ? '저장 중...' : '바로 저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
