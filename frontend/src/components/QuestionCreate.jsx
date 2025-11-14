@@ -397,23 +397,22 @@ const QuestionCreate = () => {
             </div>
 
             <div className="form-group">
-              <label>문제 *</label>
+              <label>프롬프트 *</label>
               <textarea
                 value={formData.questionText}
                 onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
                 rows="5"
                 required
-                placeholder="문제를 입력하세요"
+                placeholder="프롬프트를 입력하세요"
               />
             </div>
 
             <div className="form-group">
-              <label>정답 *</label>
+              <label>정답 (선택)</label>
               <input
                 type="text"
                 value={formData.correctAnswer}
                 onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
-                required
                 placeholder="정답을 입력하세요"
               />
             </div>

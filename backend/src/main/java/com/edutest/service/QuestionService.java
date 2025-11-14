@@ -85,7 +85,8 @@ public class QuestionService {
         // Save options if provided
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             for (QuestionOptionDto optionDto : request.getOptions()) {
-                boolean isCorrect = optionDto.getOptionText().equals(request.getCorrectAnswer());
+                boolean isCorrect = request.getCorrectAnswer() != null &&
+                        optionDto.getOptionText().equals(request.getCorrectAnswer());
                 QuestionOption option = QuestionOption.builder()
                         .question(savedQuestion)
                         .optionText(optionDto.getOptionText())
@@ -144,7 +145,8 @@ public class QuestionService {
 
         if (request.getOptions() != null && !request.getOptions().isEmpty()) {
             for (QuestionOptionDto optionDto : request.getOptions()) {
-                boolean isCorrect = optionDto.getOptionText().equals(request.getCorrectAnswer());
+                boolean isCorrect = request.getCorrectAnswer() != null &&
+                        optionDto.getOptionText().equals(request.getCorrectAnswer());
                 QuestionOption option = QuestionOption.builder()
                         .question(updatedQuestion)
                         .optionText(optionDto.getOptionText())
