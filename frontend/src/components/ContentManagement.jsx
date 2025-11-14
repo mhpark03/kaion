@@ -603,11 +603,11 @@ const ContentManagement = () => {
                   }}
                   className="quick-add-input"
                 />
-                <button onClick={handleQuickAdd} className="btn-quick-add">
+                <button onClick={handleQuickAdd} className="btn-quick-add" title="추가">
                   +
                 </button>
-                <button onClick={() => setShowListModal(false)} className="btn-cancel-modal">
-                  취소
+                <button onClick={() => setShowListModal(false)} className="btn-close-modal" title="닫기">
+                  ×
                 </button>
               </div>
             </div>
