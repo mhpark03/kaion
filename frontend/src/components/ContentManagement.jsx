@@ -143,7 +143,25 @@ const ContentManagement = () => {
     }
   };
 
-  const renderSection = (title, items, type) => {
+  // Calculate child count for each item
+  const getChildCount = (item, type) => {
+    switch (type) {
+      case 'level':
+        return grades.filter(g => g.levelId === item.id).length;
+      case 'grade':
+        return units.filter(u => u.gradeId === item.id).length;
+      case 'unit':
+        return subUnits.filter(su => su.unitId === item.id).length;
+      case 'subunit':
+        return concepts.filter(c => c.subUnitId === item.id).length;
+      case 'concept':
+        return 0;
+      default:
+        return 0;
+    }
+  };
+
+  const renderTable = (title, items, type, columns) => {
     return (
       <div className="content-section">
         <div className="section-header">
@@ -155,38 +173,48 @@ const ContentManagement = () => {
         {items.length === 0 ? (
           <div className="empty-section">등록된 {title}이(가) 없습니다</div>
         ) : (
-          <div className="section-items">
-            {items.map((item) => (
-              <div key={item.id} className="section-item">
-                <div className="item-info">
-                  <h3>{item.displayName || item.name}</h3>
-                  {item.description && <p className="item-description">{item.description}</p>}
-                  <div className="item-meta">
-                    {type === 'grade' && item.levelName && (
-                      <span className="badge">{item.levelName}</span>
+          <div className="table-wrapper">
+            <table className="content-table">
+              <thead>
+                <tr>
+                  {columns.map((col, idx) => (
+                    <th key={idx}>{col}</th>
+                  ))}
+                  <th>등록수</th>
+                  <th>동작</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    {type === 'grade' && (
+                      <td>{item.levelName || '-'}</td>
                     )}
-                    {type === 'unit' && item.gradeName && (
-                      <span className="badge">{item.gradeName}</span>
+                    {type === 'unit' && (
+                      <td>{item.gradeName || '-'}</td>
                     )}
-                    {type === 'subunit' && item.unitName && (
-                      <span className="badge">{item.unitName}</span>
+                    {type === 'subunit' && (
+                      <td>{item.unitName || '-'}</td>
                     )}
-                    {type === 'concept' && item.subUnitName && (
-                      <span className="badge">{item.subUnitName}</span>
+                    {type === 'concept' && (
+                      <td>{item.subUnitName || '-'}</td>
                     )}
-                    <span className="order-badge">순서: {item.orderIndex}</span>
-                  </div>
-                </div>
-                <div className="item-actions">
-                  <button onClick={() => handleEdit(item, type)} className="btn-edit">
-                    수정
-                  </button>
-                  <button onClick={() => handleDelete(item.id, type)} className="btn-delete">
-                    삭제
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <td className="name-cell">{item.displayName || item.name}</td>
+                    <td className="description-cell">{item.description || '-'}</td>
+                    <td className="order-cell">{item.orderIndex}</td>
+                    <td className="count-cell">{getChildCount(item, type)}</td>
+                    <td className="action-cell">
+                      <button onClick={() => handleEdit(item, type)} className="btn-edit-small">
+                        수정
+                      </button>
+                      <button onClick={() => handleDelete(item.id, type)} className="btn-delete-small">
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
@@ -352,11 +380,11 @@ const ContentManagement = () => {
           <div className="loading">로딩 중...</div>
         ) : (
           <div className="content-sections">
-            {renderSection('교육과정', levels, 'level')}
-            {renderSection('학년', grades, 'grade')}
-            {renderSection('대단원', units, 'unit')}
-            {renderSection('소단원', subUnits, 'subunit')}
-            {renderSection('핵심 개념', concepts, 'concept')}
+            {renderTable('교육과정', levels, 'level', ['이름', '설명', '순서'])}
+            {renderTable('학년', grades, 'grade', ['교육과정', '이름', '설명', '순서'])}
+            {renderTable('대단원', units, 'unit', ['학년', '이름', '설명', '순서'])}
+            {renderTable('소단원', subUnits, 'subunit', ['대단원', '이름', '설명', '순서'])}
+            {renderTable('핵심 개념', concepts, 'concept', ['소단원', '이름', '설명', '순서'])}
           </div>
         )}
       </div>
