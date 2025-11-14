@@ -3,6 +3,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
+import SubjectManagement from './components/SubjectManagement';
+import LevelManagement from './components/LevelManagement';
+import QuestionManagement from './components/QuestionManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -18,6 +21,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/subjects"
+            element={
+              <ProtectedRoute>
+                <SubjectManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/levels"
+            element={
+              <ProtectedRoute>
+                <LevelManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/questions"
+            element={
+              <ProtectedRoute>
+                <QuestionManagement />
               </ProtectedRoute>
             }
           />

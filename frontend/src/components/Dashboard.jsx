@@ -69,7 +69,23 @@ const Dashboard = () => {
               <div className="feature-card">
                 <h3>문제 관리</h3>
                 <p>문제를 생성하고 관리하세요</p>
-                <button className="btn-feature" disabled>준비 중</button>
+                <button className="btn-feature" onClick={() => navigate('/questions')}>
+                  문제 관리
+                </button>
+              </div>
+              <div className="feature-card">
+                <h3>과목 관리</h3>
+                <p>과목을 추가하고 관리하세요</p>
+                <button className="btn-feature" onClick={() => navigate('/subjects')}>
+                  과목 관리
+                </button>
+              </div>
+              <div className="feature-card">
+                <h3>난이도 관리</h3>
+                <p>난이도를 추가하고 관리하세요</p>
+                <button className="btn-feature" onClick={() => navigate('/levels')}>
+                  난이도 관리
+                </button>
               </div>
               <div className="feature-card">
                 <h3>학생 현황</h3>
@@ -82,13 +98,29 @@ const Dashboard = () => {
           {user?.role === 'ADMIN' && (
             <>
               <div className="feature-card">
-                <h3>사용자 관리</h3>
-                <p>시스템 사용자를 관리하세요</p>
-                <button className="btn-feature" disabled>준비 중</button>
+                <h3>과목 관리</h3>
+                <p>과목을 추가하고 관리하세요</p>
+                <button className="btn-feature" onClick={() => navigate('/subjects')}>
+                  과목 관리
+                </button>
               </div>
               <div className="feature-card">
-                <h3>과목 관리</h3>
-                <p>과목과 난이도를 설정하세요</p>
+                <h3>난이도 관리</h3>
+                <p>난이도를 추가하고 관리하세요</p>
+                <button className="btn-feature" onClick={() => navigate('/levels')}>
+                  난이도 관리
+                </button>
+              </div>
+              <div className="feature-card">
+                <h3>문제 관리</h3>
+                <p>문제를 생성하고 관리하세요</p>
+                <button className="btn-feature" onClick={() => navigate('/questions')}>
+                  문제 관리
+                </button>
+              </div>
+              <div className="feature-card">
+                <h3>사용자 관리</h3>
+                <p>시스템 사용자를 관리하세요</p>
                 <button className="btn-feature" disabled>준비 중</button>
               </div>
               <div className="feature-card">
