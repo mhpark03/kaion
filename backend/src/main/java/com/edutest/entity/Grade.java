@@ -11,35 +11,32 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "subjects")
+@Table(name = "grades")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Subject {
+public class Grade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "grade_id", nullable = false)
-    private Grade grade;
+    @JoinColumn(name = "level_id", nullable = false)
+    private Level level;
 
-    @Column(nullable = false, length = 50)
-    private String name;
+    @Column(nullable = false, unique = true, length = 50)
+    private String name;  // H1, H2, H3, M1, M2, M3, E1, E2, E3 등
 
     @Column(name = "display_name", nullable = false, length = 100)
-    private String displayName;
+    private String displayName;  // 고등학교 1학년, 중학교 1학년 등
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "icon_url")
-    private String iconUrl;
-
-    @Column(length = 20)
-    private String color;
+    @Column(name = "order_index", nullable = false)
+    private Integer orderIndex;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

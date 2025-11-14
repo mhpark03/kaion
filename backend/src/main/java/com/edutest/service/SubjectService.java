@@ -1,7 +1,9 @@
 package com.edutest.service;
 
 import com.edutest.dto.SubjectDto;
+import com.edutest.entity.Grade;
 import com.edutest.entity.Subject;
+import com.edutest.repository.GradeRepository;
 import com.edutest.repository.SubjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 public class SubjectService {
 
     private final SubjectRepository subjectRepository;
+    private final GradeRepository gradeRepository;
 
     @Transactional(readOnly = true)
     public List<SubjectDto> getAllSubjects() {
@@ -32,12 +35,11 @@ public class SubjectService {
 
     @Transactional
     public SubjectDto createSubject(SubjectDto dto) {
-        // Check if subject with same name exists
-        if (subjectRepository.findByName(dto.getName()).isPresent()) {
-            throw new IllegalArgumentException("Subject with name '" + dto.getName() + "' already exists");
-        }
+        Grade grade = gradeRepository.findById(dto.getGradeId())
+                .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + dto.getGradeId()));
 
         Subject subject = Subject.builder()
+                .grade(grade)
                 .name(dto.getName())
                 .displayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName())
                 .description(dto.getDescription())
@@ -54,12 +56,11 @@ public class SubjectService {
         Subject subject = subjectRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Subject not found with id: " + id));
 
-        // Check if another subject with same name exists
-        subjectRepository.findByName(dto.getName()).ifPresent(existing -> {
-            if (!existing.getId().equals(id)) {
-                throw new IllegalArgumentException("Subject with name '" + dto.getName() + "' already exists");
-            }
-        });
+        if (dto.getGradeId() != null) {
+            Grade grade = gradeRepository.findById(dto.getGradeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + dto.getGradeId()));
+            subject.setGrade(grade);
+        }
 
         subject.setName(dto.getName());
         subject.setDisplayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName());
@@ -82,6 +83,8 @@ public class SubjectService {
     private SubjectDto convertToDto(Subject subject) {
         return SubjectDto.builder()
                 .id(subject.getId())
+                .gradeId(subject.getGrade().getId())
+                .gradeName(subject.getGrade().getName())
                 .name(subject.getName())
                 .displayName(subject.getDisplayName())
                 .description(subject.getDescription())

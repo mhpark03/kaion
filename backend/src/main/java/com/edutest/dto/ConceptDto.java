@@ -9,13 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SubjectDto {
+public class ConceptDto {
     private Long id;
-    private Long gradeId;
-    private String gradeName;
     private String name;
     private String displayName;
     private String description;
-    private String color;
-    private String iconUrl;
 }
