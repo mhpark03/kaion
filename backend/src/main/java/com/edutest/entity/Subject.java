@@ -23,7 +23,7 @@ public class Subject {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "grade_id")
+    @JoinColumn(name = "grade_id", nullable = true)
     private Grade grade;
 
     @Column(nullable = false, length = 50)
