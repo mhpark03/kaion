@@ -33,15 +33,22 @@ mysql -u root -p edutest < ../scripts/init-db.sql
 
 ### 환경 설정
 
-`src/main/resources/application-dev.yml` 파일에서 데이터베이스 연결 정보를 확인/수정하세요:
+1. `application-dev.yml.example` 파일을 복사하여 `application-dev.yml` 파일을 생성:
+```bash
+cp src/main/resources/application-dev.yml.example src/main/resources/application-dev.yml
+```
+
+2. `src/main/resources/application-dev.yml` 파일에서 데이터베이스 연결 정보를 수정:
 
 ```yaml
 spring:
   datasource:
     url: jdbc:mysql://localhost:3306/edutest?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: root  # 본인의 MySQL 비밀번호로 변경
+    password: YOUR_MYSQL_PASSWORD_HERE  # 본인의 MySQL 비밀번호로 변경
 ```
+
+**주의**: `application-dev.yml` 파일은 `.gitignore`에 포함되어 있어 Git에 커밋되지 않습니다.
 
 ### 애플리케이션 실행
 

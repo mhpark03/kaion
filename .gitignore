@@ -13,6 +13,7 @@ target/
 # Spring Boot
 application-local.yml
 application-*.yml.local
+**/application-dev.yml
 
 # Database
 *.db
