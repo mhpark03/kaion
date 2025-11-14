@@ -471,22 +471,25 @@ const ContentManagement = () => {
       <Navbar />
 
       <div className="content-management">
-        <div className="quick-add-buttons">
-          <button onClick={() => openCreateModal('level')} className="quick-add-btn level">
-            + 교육과정
-          </button>
-          <button onClick={() => openCreateModal('grade')} className="quick-add-btn grade">
-            + 학년
-          </button>
-          <button onClick={() => openCreateModal('unit')} className="quick-add-btn unit">
-            + 대단원
-          </button>
-          <button onClick={() => openCreateModal('subunit')} className="quick-add-btn subunit">
-            + 소단원
-          </button>
-          <button onClick={() => openCreateModal('concept')} className="quick-add-btn concept">
-            + 핵심 개념
-          </button>
+        <div className="page-header">
+          <h1>과정관리</h1>
+          <div className="icon-buttons">
+            <button onClick={() => openCreateModal('level')} className="icon-btn level" title="교육과정">
+              과
+            </button>
+            <button onClick={() => openCreateModal('grade')} className="icon-btn grade" title="학년">
+              학
+            </button>
+            <button onClick={() => openCreateModal('unit')} className="icon-btn unit" title="대단원">
+              대
+            </button>
+            <button onClick={() => openCreateModal('subunit')} className="icon-btn subunit" title="소단원">
+              소
+            </button>
+            <button onClick={() => openCreateModal('concept')} className="icon-btn concept" title="핵심 개념">
+              핵
+            </button>
+          </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
