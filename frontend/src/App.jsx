@@ -5,6 +5,7 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import ContentManagement from './components/ContentManagement';
 import QuestionManagement from './components/QuestionManagement';
+import QuestionCreate from './components/QuestionCreate';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -36,6 +37,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <QuestionManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/question-create"
+            element={
+              <ProtectedRoute>
+                <QuestionCreate />
               </ProtectedRoute>
             }
           />
