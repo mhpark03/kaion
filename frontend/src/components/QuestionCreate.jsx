@@ -552,34 +552,52 @@ const QuestionCreate = () => {
             </div>
 
             <div className="modal-body">
+              {/* 그림 섹션 */}
+              {(aiPreview.generatedImagePreview || imagePreview) && (
+                <div className="preview-section">
+                  <h3>📷 그림</h3>
+                  <div className="preview-image">
+                    <img src={aiPreview.generatedImagePreview || imagePreview} alt="문제 이미지" />
+                  </div>
+                </div>
+              )}
+
+              {/* 문제 섹션 */}
               <div className="preview-section">
-                <h3>문제</h3>
+                <h3>📝 문제</h3>
                 <div className="preview-content">
                   {aiPreview.questionText}
                 </div>
               </div>
 
+              {/* 보기 섹션 */}
+              {(formData.questionType === 'MULTIPLE_CHOICE' || formData.questionType === 'TRUE_FALSE') && (
+                <div className="preview-section">
+                  <h3>📋 보기</h3>
+                  <div className="preview-options">
+                    <div className="option-placeholder">
+                      {formData.questionType === 'MULTIPLE_CHOICE'
+                        ? '※ 객관식 보기는 "수정 후 저장"을 선택하여 추가할 수 있습니다.'
+                        : '※ O/X 보기는 자동으로 생성됩니다.'}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 정답 섹션 */}
               <div className="preview-section">
-                <h3>정답</h3>
+                <h3>✅ 정답</h3>
                 <div className="preview-content answer">
                   {aiPreview.correctAnswer}
                 </div>
               </div>
 
+              {/* 해설 섹션 */}
               {aiPreview.explanation && (
                 <div className="preview-section">
-                  <h3>해설</h3>
+                  <h3>💡 해설</h3>
                   <div className="preview-content explanation">
                     {aiPreview.explanation}
-                  </div>
-                </div>
-              )}
-
-              {aiPreview.generatedImagePreview && (
-                <div className="preview-section">
-                  <h3>AI 생성 이미지</h3>
-                  <div className="preview-image">
-                    <img src={aiPreview.generatedImagePreview} alt="AI Generated" />
                   </div>
                 </div>
               )}

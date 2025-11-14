@@ -15,6 +15,8 @@ const QuestionManagement = () => {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [error, setError] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   const [formData, setFormData] = useState({
     levelId: '',
@@ -23,7 +25,8 @@ const QuestionManagement = () => {
     correctAnswer: '',
     points: 10,
     options: [],
-    conceptId: ''
+    conceptId: '',
+    explanation: ''
   });
 
   useEffect(() => {
@@ -95,9 +98,31 @@ const QuestionManagement = () => {
       questionType: question.questionType,
       correctAnswer: question.correctAnswer,
       points: question.points,
-      options: question.options || []
+      options: question.options || [],
+      explanation: question.explanation || ''
     });
+    // Load existing image if available
+    if (question.referenceImage) {
+      setImagePreview(question.referenceImage);
+    }
     setShowModal(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview('');
   };
 
   const handleDelete = async (id) => {
@@ -118,6 +143,8 @@ const QuestionManagement = () => {
 
   const resetForm = () => {
     setEditingQuestion(null);
+    setImageFile(null);
+    setImagePreview('');
     setFormData({
       levelId: '',
       questionText: '',
@@ -125,7 +152,8 @@ const QuestionManagement = () => {
       correctAnswer: '',
       points: 10,
       options: [],
-      conceptId: ''
+      conceptId: '',
+      explanation: ''
     });
   };
 
@@ -214,102 +242,162 @@ const QuestionManagement = () => {
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
-            <h2>{editingQuestion ? '문제 수정' : '새 문제 추가'}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>난이도</label>
-                  <select
-                    value={formData.levelId}
-                    onChange={(e) => setFormData({ ...formData, levelId: e.target.value })}
-                    required
-                  >
-                    <option value="">선택하세요</option>
-                    {levels.map((l) => (
-                      <option key={l.id} value={l.id}>{l.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+          <div className="modal-content preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingQuestion ? '문제 수정' : '새 문제 추가'}</h2>
+              <button className="btn-close" onClick={() => setShowModal(false)}>×</button>
+            </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label>문제 유형</label>
-                  <select
-                    value={formData.questionType}
-                    onChange={(e) => setFormData({ ...formData, questionType: e.target.value })}
-                  >
-                    <option value="MULTIPLE_CHOICE">객관식</option>
-                    <option value="TRUE_FALSE">O/X</option>
-                    <option value="SHORT_ANSWER">주관식</option>
-                    <option value="ESSAY">서술형</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>배점</label>
-                  <input
-                    type="number"
-                    value={formData.points}
-                    onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) })}
-                    required
-                    min="1"
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>문제</label>
-                <textarea
-                  value={formData.questionText}
-                  onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
-                  rows="4"
-                  required
-                />
-              </div>
-
-              {(formData.questionType === 'MULTIPLE_CHOICE' || formData.questionType === 'TRUE_FALSE') && (
-                <div className="form-group">
-                  <label>선택지</label>
-                  {formData.options.map((option, idx) => (
-                    <div key={idx} className="option-input">
-                      <input
-                        type="text"
-                        value={option.optionText}
-                        onChange={(e) => updateOption(idx, e.target.value)}
-                        placeholder={`선택지 ${idx + 1}`}
-                        required
-                      />
-                      <button type="button" onClick={() => removeOption(idx)} className="btn-remove">
-                        ×
+            <div className="modal-body">
+              <form onSubmit={handleSubmit}>
+                {/* 그림 섹션 */}
+                <div className="preview-section">
+                  <h3>📷 그림</h3>
+                  {imagePreview ? (
+                    <div className="preview-image">
+                      <img src={imagePreview} alt="문제 이미지" />
+                      <button type="button" onClick={removeImage} className="btn-remove-image">
+                        이미지 제거
                       </button>
                     </div>
-                  ))}
-                  <button type="button" onClick={addOption} className="btn-add-option">
-                    + 선택지 추가
+                  ) : (
+                    <div className="image-upload">
+                      <label className="upload-label">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="file-input"
+                        />
+                        <span>+ 이미지 업로드</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* 문제 섹션 */}
+                <div className="preview-section">
+                  <h3>📝 문제</h3>
+                  <div className="form-group">
+                    <textarea
+                      value={formData.questionText}
+                      onChange={(e) => setFormData({ ...formData, questionText: e.target.value })}
+                      rows="4"
+                      required
+                      placeholder="문제를 입력하세요"
+                      className="edit-textarea"
+                    />
+                  </div>
+                </div>
+
+                {/* 보기 섹션 */}
+                {(formData.questionType === 'MULTIPLE_CHOICE' || formData.questionType === 'TRUE_FALSE') && (
+                  <div className="preview-section">
+                    <h3>📋 보기</h3>
+                    <div className="form-group">
+                      {formData.options.map((option, idx) => (
+                        <div key={idx} className="option-input">
+                          <span className="option-number">{idx + 1}.</span>
+                          <input
+                            type="text"
+                            value={option.optionText}
+                            onChange={(e) => updateOption(idx, e.target.value)}
+                            placeholder={`선택지 ${idx + 1}`}
+                            required
+                          />
+                          <button type="button" onClick={() => removeOption(idx)} className="btn-remove">
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <button type="button" onClick={addOption} className="btn-add-option">
+                        + 선택지 추가
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 정답 섹션 */}
+                <div className="preview-section">
+                  <h3>✅ 정답</h3>
+                  <div className="form-group">
+                    <input
+                      type="text"
+                      value={formData.correctAnswer}
+                      onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                      required
+                      placeholder="정답을 입력하세요"
+                      className="edit-input answer"
+                    />
+                  </div>
+                </div>
+
+                {/* 해설 섹션 */}
+                <div className="preview-section">
+                  <h3>💡 해설</h3>
+                  <div className="form-group">
+                    <textarea
+                      value={formData.explanation}
+                      onChange={(e) => setFormData({ ...formData, explanation: e.target.value })}
+                      rows="3"
+                      placeholder="해설을 입력하세요 (선택사항)"
+                      className="edit-textarea"
+                    />
+                  </div>
+                </div>
+
+                {/* 설정 섹션 */}
+                <div className="preview-section">
+                  <h3>⚙️ 설정</h3>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>난이도</label>
+                      <select
+                        value={formData.levelId}
+                        onChange={(e) => setFormData({ ...formData, levelId: e.target.value })}
+                        required
+                      >
+                        <option value="">선택하세요</option>
+                        {levels.map((l) => (
+                          <option key={l.id} value={l.id}>{l.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>문제 유형</label>
+                      <select
+                        value={formData.questionType}
+                        onChange={(e) => setFormData({ ...formData, questionType: e.target.value })}
+                      >
+                        <option value="MULTIPLE_CHOICE">객관식</option>
+                        <option value="TRUE_FALSE">O/X</option>
+                        <option value="SHORT_ANSWER">주관식</option>
+                        <option value="ESSAY">서술형</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label>배점</label>
+                      <input
+                        type="number"
+                        value={formData.points}
+                        onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) })}
+                        required
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+                    취소
+                  </button>
+                  <button type="submit" className="btn-primary">
+                    저장
                   </button>
                 </div>
-              )}
-
-              <div className="form-group">
-                <label>정답</label>
-                <input
-                  type="text"
-                  value={formData.correctAnswer}
-                  onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-cancel">
-                  취소
-                </button>
-                <button type="submit" className="btn-submit">
-                  저장
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}
