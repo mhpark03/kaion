@@ -14,6 +14,7 @@ public class QuestionCreateRequest {
     private String correctAnswer;
     private Integer points;
     private String referenceImage; // 참조 이미지 파일 경로
+    private String referenceDocument; // 참조 문서 파일 경로
     private List<QuestionOptionDto> options;
     private List<Long> conceptIds; // Concept IDs to associate with this question
 }

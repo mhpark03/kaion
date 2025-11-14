@@ -59,6 +59,9 @@ public class Question {
     @Column(name = "reference_image")
     private String referenceImage;  // 참조 이미지 파일 경로
 
+    @Column(name = "reference_document")
+    private String referenceDocument;  // 참조 문서 파일 경로
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;

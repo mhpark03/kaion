@@ -33,12 +33,12 @@ const QuestionCreate = () => {
     difficulty: 'MEDIUM',
     questionText: '',
     questionType: 'MULTIPLE_CHOICE',
-    correctAnswer: '',
-    options: []
+    correctAnswer: ''
   });
 
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [documentFile, setDocumentFile] = useState(null);
 
   const difficultyLevels = [
     { value: 'VERY_EASY', label: '매우 쉬움' },
@@ -135,6 +135,10 @@ const QuestionCreate = () => {
         formDataToSend.append('image', imageFile);
       }
 
+      if (documentFile) {
+        formDataToSend.append('document', documentFile);
+      }
+
       await questionService.createWithImage(formDataToSend);
       navigate('/questions');
     } catch (error) {
@@ -142,23 +146,6 @@ const QuestionCreate = () => {
     }
   };
 
-  const addOption = () => {
-    setFormData({
-      ...formData,
-      options: [...formData.options, { optionText: '', optionOrder: formData.options.length + 1 }]
-    });
-  };
-
-  const removeOption = (index) => {
-    const newOptions = formData.options.filter((_, i) => i !== index);
-    setFormData({ ...formData, options: newOptions });
-  };
-
-  const updateOption = (index, value) => {
-    const newOptions = [...formData.options];
-    newOptions[index].optionText = value;
-    setFormData({ ...formData, options: newOptions });
-  };
 
   // Filter data based on selections
   const filteredGrades = selectedLevel
@@ -219,6 +206,17 @@ const QuestionCreate = () => {
   const removeImage = () => {
     setImageFile(null);
     setImagePreview(null);
+  };
+
+  const handleDocumentChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setDocumentFile(file);
+    }
+  };
+
+  const removeDocument = () => {
+    setDocumentFile(null);
   };
 
   if (loading) return <div className="loading">로딩 중...</div>;
@@ -381,6 +379,24 @@ const QuestionCreate = () => {
             </div>
 
             <div className="form-group">
+              <label>참조 문서 (선택)</label>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.hwp,.txt"
+                onChange={handleDocumentChange}
+                className="file-input"
+              />
+              {documentFile && (
+                <div className="document-info">
+                  <span className="file-name">{documentFile.name}</span>
+                  <button type="button" onClick={removeDocument} className="btn-remove-document">
+                    문서 제거
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
               <label>문제 *</label>
               <textarea
                 value={formData.questionText}
@@ -390,29 +406,6 @@ const QuestionCreate = () => {
                 placeholder="문제를 입력하세요"
               />
             </div>
-
-            {(formData.questionType === 'MULTIPLE_CHOICE' || formData.questionType === 'TRUE_FALSE') && (
-              <div className="form-group">
-                <label>선택지</label>
-                {formData.options.map((option, idx) => (
-                  <div key={idx} className="option-input">
-                    <input
-                      type="text"
-                      value={option.optionText}
-                      onChange={(e) => updateOption(idx, e.target.value)}
-                      placeholder={`선택지 ${idx + 1}`}
-                      required
-                    />
-                    <button type="button" onClick={() => removeOption(idx)} className="btn-remove">
-                      ×
-                    </button>
-                  </div>
-                ))}
-                <button type="button" onClick={addOption} className="btn-add-option">
-                  + 선택지 추가
-                </button>
-              </div>
-            )}
 
             <div className="form-group">
               <label>정답 *</label>

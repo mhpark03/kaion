@@ -76,6 +76,7 @@ public class QuestionService {
                 .questionType(Question.QuestionType.valueOf(request.getQuestionType()))
                 .points(request.getPoints())
                 .referenceImage(request.getReferenceImage())
+                .referenceDocument(request.getReferenceDocument())
                 .concepts(concepts)
                 .build();
 
@@ -130,6 +131,7 @@ public class QuestionService {
         question.setQuestionType(Question.QuestionType.valueOf(request.getQuestionType()));
         question.setPoints(request.getPoints());
         question.setReferenceImage(request.getReferenceImage());
+        question.setReferenceDocument(request.getReferenceDocument());
 
         // Clear and update concepts
         question.getConcepts().clear();
@@ -206,6 +208,7 @@ public class QuestionService {
                 .correctAnswer(correctAnswer)
                 .points(question.getPoints())
                 .referenceImage(question.getReferenceImage())
+                .referenceDocument(question.getReferenceDocument())
                 .options(options)
                 .concepts(conceptDtos)
                 .build();
