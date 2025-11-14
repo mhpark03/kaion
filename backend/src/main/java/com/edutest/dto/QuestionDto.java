@@ -13,8 +13,6 @@ import java.util.List;
 @AllArgsConstructor
 public class QuestionDto {
     private Long id;
-    private Long subjectId;
-    private String subjectName;
     private Long levelId;
     private String levelName;
     private Long subUnitId;

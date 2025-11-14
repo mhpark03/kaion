@@ -19,7 +19,7 @@ const Navbar = () => {
   };
 
   const isContentMenuActive = () => {
-    const contentPaths = ['/levels', '/grades', '/subjects', '/units', '/sub-units', '/concepts'];
+    const contentPaths = ['/levels', '/grades', '/units', '/sub-units', '/concepts'];
     return contentPaths.includes(location.pathname) ? 'active' : '';
   };
 
@@ -52,9 +52,6 @@ const Navbar = () => {
                     </div>
                     <div className="dropdown-item" onClick={() => navigate('/grades')}>
                       학년
-                    </div>
-                    <div className="dropdown-item" onClick={() => navigate('/subjects')}>
-                      과목
                     </div>
                     <div className="dropdown-item" onClick={() => navigate('/units')}>
                       대단원

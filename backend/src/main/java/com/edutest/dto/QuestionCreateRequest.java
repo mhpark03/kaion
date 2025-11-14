@@ -5,7 +5,6 @@ import java.util.List;
 
 @Data
 public class QuestionCreateRequest {
-    private Long subjectId;
     private Long levelId;
     private Long subUnitId;
     private String difficulty; // E (쉬움), M (보통), H (어려움)

@@ -27,10 +27,6 @@ public class Question {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", nullable = false)
-    private Subject subject;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "level_id", nullable = false)
     private Level level;
 

@@ -23,8 +23,8 @@ public class Unit {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", nullable = false)
-    private Subject subject;
+    @JoinColumn(name = "grade_id", nullable = false)
+    private Grade grade;
 
     @Column(nullable = false, length = 100)
     private String name;  // 역학적 시스템, 물질의 규칙성과 결합 등

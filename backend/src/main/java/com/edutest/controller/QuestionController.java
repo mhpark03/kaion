@@ -19,14 +19,9 @@ public class QuestionController {
 
     @GetMapping
     public ResponseEntity<List<QuestionDto>> getAllQuestions(
-            @RequestParam(required = false) Long subjectId,
             @RequestParam(required = false) Long levelId) {
 
-        if (subjectId != null && levelId != null) {
-            return ResponseEntity.ok(questionService.getQuestionsBySubjectAndLevel(subjectId, levelId));
-        } else if (subjectId != null) {
-            return ResponseEntity.ok(questionService.getQuestionsBySubject(subjectId));
-        } else if (levelId != null) {
+        if (levelId != null) {
             return ResponseEntity.ok(questionService.getQuestionsByLevel(levelId));
         } else {
             return ResponseEntity.ok(questionService.getAllQuestions());

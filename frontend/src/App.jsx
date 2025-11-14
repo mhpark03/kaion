@@ -5,7 +5,6 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import LevelManagement from './components/LevelManagement';
 import GradeManagement from './components/GradeManagement';
-import SubjectManagement from './components/SubjectManagement';
 import UnitManagement from './components/UnitManagement';
 import SubUnitManagement from './components/SubUnitManagement';
 import ConceptManagement from './components/ConceptManagement';
@@ -41,14 +40,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <GradeManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/subjects"
-            element={
-              <ProtectedRoute>
-                <SubjectManagement />
               </ProtectedRoute>
             }
           />

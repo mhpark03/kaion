@@ -1,9 +1,9 @@
 package com.edutest.service;
 
 import com.edutest.dto.UnitDto;
-import com.edutest.entity.Subject;
+import com.edutest.entity.Grade;
 import com.edutest.entity.Unit;
-import com.edutest.repository.SubjectRepository;
+import com.edutest.repository.GradeRepository;
 import com.edutest.repository.UnitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class UnitService {
 
     private final UnitRepository unitRepository;
-    private final SubjectRepository subjectRepository;
+    private final GradeRepository gradeRepository;
 
     @Transactional(readOnly = true)
     public List<UnitDto> getAllUnits() {
@@ -27,8 +27,8 @@ public class UnitService {
     }
 
     @Transactional(readOnly = true)
-    public List<UnitDto> getUnitsBySubject(Long subjectId) {
-        return unitRepository.findBySubjectIdOrderByOrderIndexAsc(subjectId).stream()
+    public List<UnitDto> getUnitsByGrade(Long gradeId) {
+        return unitRepository.findByGradeIdOrderByOrderIndexAsc(gradeId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -42,11 +42,11 @@ public class UnitService {
 
     @Transactional
     public UnitDto createUnit(UnitDto dto) {
-        Subject subject = subjectRepository.findById(dto.getSubjectId())
-                .orElseThrow(() -> new IllegalArgumentException("Subject not found with id: " + dto.getSubjectId()));
+        Grade grade = gradeRepository.findById(dto.getGradeId())
+                .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + dto.getGradeId()));
 
         Unit unit = Unit.builder()
-                .subject(subject)
+                .grade(grade)
                 .name(dto.getName())
                 .displayName(dto.getDisplayName() != null ? dto.getDisplayName() : dto.getName())
                 .description(dto.getDescription())
@@ -62,10 +62,10 @@ public class UnitService {
         Unit unit = unitRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Unit not found with id: " + id));
 
-        if (dto.getSubjectId() != null) {
-            Subject subject = subjectRepository.findById(dto.getSubjectId())
-                    .orElseThrow(() -> new IllegalArgumentException("Subject not found with id: " + dto.getSubjectId()));
-            unit.setSubject(subject);
+        if (dto.getGradeId() != null) {
+            Grade grade = gradeRepository.findById(dto.getGradeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Grade not found with id: " + dto.getGradeId()));
+            unit.setGrade(grade);
         }
 
         unit.setName(dto.getName());
@@ -90,8 +90,8 @@ public class UnitService {
     private UnitDto convertToDto(Unit unit) {
         return UnitDto.builder()
                 .id(unit.getId())
-                .subjectId(unit.getSubject().getId())
-                .subjectName(unit.getSubject().getName())
+                .gradeId(unit.getGrade().getId())
+                .gradeName(unit.getGrade().getName())
                 .name(unit.getName())
                 .displayName(unit.getDisplayName())
                 .description(unit.getDescription())
