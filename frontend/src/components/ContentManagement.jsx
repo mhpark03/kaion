@@ -281,12 +281,6 @@ const ContentManagement = () => {
   const renderTable = (title, items, type) => {
     return (
       <div className="content-section">
-        <div className="section-header">
-          <h2>{title}</h2>
-          <button onClick={() => openCreateModal(type)} className="btn-add-section">
-            + 추가
-          </button>
-        </div>
         {items.length === 0 ? (
           <div className="empty-section">등록된 {title}이(가) 없습니다</div>
         ) : (
