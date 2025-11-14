@@ -19,9 +19,13 @@ public class DataInitializer implements CommandLineRunner {
     private final UnitService unitService;
     private final SubUnitService subUnitService;
     private final ConceptService conceptService;
+    private final SubjectService subjectService;
 
     @Override
     public void run(String... args) throws Exception {
+        // Ensure default Science subject exists
+        createDefaultSubject();
+
         // Only initialize if database is empty
         if (!levelService.getAllLevels().isEmpty()) {
             log.info("Database already contains data. Skipping initialization.");
@@ -47,6 +51,24 @@ public class DataInitializer implements CommandLineRunner {
         createElementarySchool(levels.get("초등학교"));
         createMiddleSchool(levels.get("중학교"));
         createHighSchool(levels.get("고등학교"));
+    }
+
+    private void createDefaultSubject() {
+        // Check if Science subject already exists
+        boolean exists = subjectService.getAllSubjects().stream()
+                .anyMatch(s -> "Science".equals(s.getName()));
+
+        if (!exists) {
+            SubjectDto dto = SubjectDto.builder()
+                    .name("Science")
+                    .displayName("과학")
+                    .description("과학 교과")
+                    .build();
+            subjectService.createSubject(dto);
+            log.info("Created default subject: Science");
+        } else {
+            log.info("Default subject 'Science' already exists");
+        }
     }
 
     private Map<String, Long> createLevels() {
