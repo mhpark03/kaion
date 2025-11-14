@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Navbar.css';
@@ -7,7 +6,6 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [showContentDropdown, setShowContentDropdown] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -16,11 +14,6 @@ const Navbar = () => {
 
   const isActive = (path) => {
     return location.pathname === path ? 'active' : '';
-  };
-
-  const isContentMenuActive = () => {
-    const contentPaths = ['/levels', '/grades', '/units', '/sub-units', '/concepts'];
-    return contentPaths.includes(location.pathname) ? 'active' : '';
   };
 
   return (
@@ -36,35 +29,8 @@ const Navbar = () => {
 
         {(user?.role === 'ADMIN' || user?.role === 'TEACHER') && (
           <>
-            <div
-              className="navbar-item dropdown"
-              onMouseEnter={() => setShowContentDropdown(true)}
-              onMouseLeave={() => setShowContentDropdown(false)}
-            >
-              <span className={`nav-link ${isContentMenuActive()}`}>
-                교육과정 관리 ▾
-              </span>
-              {showContentDropdown && (
-                <div className="dropdown-menu">
-                  <div className="dropdown-menu-content">
-                    <div className="dropdown-item" onClick={() => navigate('/levels')}>
-                      교육과정
-                    </div>
-                    <div className="dropdown-item" onClick={() => navigate('/grades')}>
-                      학년
-                    </div>
-                    <div className="dropdown-item" onClick={() => navigate('/units')}>
-                      대단원
-                    </div>
-                    <div className="dropdown-item" onClick={() => navigate('/sub-units')}>
-                      소단원
-                    </div>
-                    <div className="dropdown-item" onClick={() => navigate('/concepts')}>
-                      핵심 개념
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div className="navbar-item" onClick={() => navigate('/content')}>
+              <span className={`nav-link ${isActive('/content')}`}>교육과정 관리</span>
             </div>
 
             <div className="navbar-item" onClick={() => navigate('/questions')}>

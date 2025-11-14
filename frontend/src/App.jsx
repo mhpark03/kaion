@@ -3,11 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
-import LevelManagement from './components/LevelManagement';
-import GradeManagement from './components/GradeManagement';
-import UnitManagement from './components/UnitManagement';
-import SubUnitManagement from './components/SubUnitManagement';
-import ConceptManagement from './components/ConceptManagement';
+import ContentManagement from './components/ContentManagement';
 import QuestionManagement from './components/QuestionManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
@@ -28,42 +24,10 @@ function App() {
             }
           />
           <Route
-            path="/levels"
+            path="/content"
             element={
               <ProtectedRoute>
-                <LevelManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/grades"
-            element={
-              <ProtectedRoute>
-                <GradeManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/units"
-            element={
-              <ProtectedRoute>
-                <UnitManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/sub-units"
-            element={
-              <ProtectedRoute>
-                <SubUnitManagement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/concepts"
-            element={
-              <ProtectedRoute>
-                <ConceptManagement />
+                <ContentManagement />
               </ProtectedRoute>
             }
           />
