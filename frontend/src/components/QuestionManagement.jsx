@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { questionService } from '../services/questionService';
 import { levelService } from '../services/levelService';
 import Navbar from './Navbar';
 import './Management.css';
 
 const QuestionManagement = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [questions, setQuestions] = useState([]);
   const [levels, setLevels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -19,12 +21,25 @@ const QuestionManagement = () => {
     questionType: 'MULTIPLE_CHOICE',
     correctAnswer: '',
     points: 10,
-    options: []
+    options: [],
+    conceptId: ''
   });
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    // Check if conceptId is in URL query params
+    const conceptId = searchParams.get('conceptId');
+    if (conceptId && !showModal) {
+      // Auto-open create modal with conceptId
+      setFormData(prev => ({ ...prev, conceptId }));
+      setShowModal(true);
+      // Remove conceptId from URL to prevent reopening
+      setSearchParams({});
+    }
+  }, [searchParams, showModal, setSearchParams]);
 
   useEffect(() => {
     loadQuestions();
@@ -108,7 +123,8 @@ const QuestionManagement = () => {
       questionType: 'MULTIPLE_CHOICE',
       correctAnswer: '',
       points: 10,
-      options: []
+      options: [],
+      conceptId: ''
     });
   };
 
