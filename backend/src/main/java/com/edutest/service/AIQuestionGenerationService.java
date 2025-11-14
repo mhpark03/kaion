@@ -2,7 +2,7 @@ package com.edutest.service;
 
 import com.edutest.dto.AIQuestionGenerationRequest;
 import com.edutest.dto.AIQuestionGenerationResponse;
-import com.edutest.entity.Concept;
+import com.edutest.entity.*;
 import com.edutest.repository.ConceptRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,11 +54,11 @@ public class AIQuestionGenerationService {
             MultipartFile referenceImage,
             MultipartFile referenceDocument
     ) throws IOException {
-        // Get concept information
-        Concept concept = conceptRepository.findById(request.getConceptId())
+        // Get concept information with full hierarchy (Level → Grade → Subject → Unit → SubUnit → Concept)
+        Concept concept = conceptRepository.findByIdWithFullHierarchy(request.getConceptId())
                 .orElseThrow(() -> new IllegalArgumentException("Concept not found"));
 
-        // Build the prompt for OpenAI
+        // Build the prompt for OpenAI (includes grade information from hierarchy)
         String systemPrompt = buildSystemPrompt(concept, request);
         String userPrompt = buildUserPrompt(request, referenceDocument);
 
@@ -108,24 +108,90 @@ public class AIQuestionGenerationService {
         String difficultyKorean = mapDifficultyToKorean(request.getDifficulty());
         String questionTypeKorean = mapQuestionTypeToKorean(request.getQuestionType());
 
-        return String.format(
-            "당신은 과학 교육 전문가입니다. 다음 정보를 바탕으로 교육용 문제를 생성해주세요:\n\n" +
-            "- 핵심개념: %s\n" +
-            "- 개념 설명: %s\n" +
-            "- 난이도: %s\n" +
-            "- 문제 유형: %s\n\n" +
-            "다음 JSON 형식으로 응답해주세요:\n" +
-            "{\n" +
-            "  \"questionText\": \"생성된 문제 텍스트\",\n" +
-            "  \"correctAnswer\": \"정답\",\n" +
-            "  \"explanation\": \"상세한 해설\"\n" +
-            "}\n\n" +
-            "문제는 학생들이 개념을 깊이 이해할 수 있도록 구성해주세요.",
-            concept.getName(),
-            concept.getDescription() != null ? concept.getDescription() : "설명 없음",
-            difficultyKorean,
-            questionTypeKorean
-        );
+        // Extract grade and educational hierarchy information
+        String gradeInfo = extractGradeInfo(concept);
+        String hierarchyInfo = extractHierarchyInfo(concept);
+
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append("당신은 과학 교육 전문가입니다. 다음 정보를 바탕으로 교육용 문제를 생성해주세요:\n\n");
+
+        // Add grade and hierarchy information
+        if (!gradeInfo.isEmpty()) {
+            promptBuilder.append("### 교육 대상\n");
+            promptBuilder.append(gradeInfo).append("\n");
+        }
+
+        if (!hierarchyInfo.isEmpty()) {
+            promptBuilder.append("### 교육 과정 위치\n");
+            promptBuilder.append(hierarchyInfo).append("\n");
+        }
+
+        // Add concept information
+        promptBuilder.append("### 핵심 개념\n");
+        promptBuilder.append("- 개념명: ").append(concept.getName()).append("\n");
+        if (concept.getDescription() != null && !concept.getDescription().isEmpty()) {
+            promptBuilder.append("- 개념 설명: ").append(concept.getDescription()).append("\n");
+        }
+        promptBuilder.append("\n");
+
+        // Add question requirements
+        promptBuilder.append("### 문제 요구사항\n");
+        promptBuilder.append("- 난이도: ").append(difficultyKorean).append("\n");
+        promptBuilder.append("- 문제 유형: ").append(questionTypeKorean).append("\n\n");
+
+        // Add JSON format instruction
+        promptBuilder.append("다음 JSON 형식으로 응답해주세요:\n");
+        promptBuilder.append("{\n");
+        promptBuilder.append("  \"questionText\": \"생성된 문제 텍스트\",\n");
+        promptBuilder.append("  \"correctAnswer\": \"정답\",\n");
+        promptBuilder.append("  \"explanation\": \"상세한 해설\"\n");
+        promptBuilder.append("}\n\n");
+        promptBuilder.append("문제는 해당 학년 수준에 맞게, 학생들이 개념을 깊이 이해할 수 있도록 구성해주세요.");
+
+        return promptBuilder.toString();
+    }
+
+    private String extractGradeInfo(Concept concept) {
+        StringBuilder gradeInfo = new StringBuilder();
+
+        if (concept.getSubUnit() != null) {
+            SubUnit subUnit = concept.getSubUnit();
+            if (subUnit.getUnit() != null) {
+                Unit unit = subUnit.getUnit();
+                if (unit.getGrade() != null) {
+                    Grade grade = unit.getGrade();
+                    gradeInfo.append("- 학년: ").append(grade.getDisplayName()).append(" (").append(grade.getName()).append(")\n");
+
+                    if (grade.getLevel() != null) {
+                        Level level = grade.getLevel();
+                        gradeInfo.append("- 교육 과정: ").append(level.getDisplayName()).append("\n");
+                    }
+                }
+
+                if (unit.getSubject() != null) {
+                    Subject subject = unit.getSubject();
+                    gradeInfo.append("- 과목: ").append(subject.getDisplayName()).append("\n");
+                }
+            }
+        }
+
+        return gradeInfo.toString();
+    }
+
+    private String extractHierarchyInfo(Concept concept) {
+        StringBuilder hierarchyInfo = new StringBuilder();
+
+        if (concept.getSubUnit() != null) {
+            SubUnit subUnit = concept.getSubUnit();
+            hierarchyInfo.append("- 중단원: ").append(subUnit.getDisplayName()).append("\n");
+
+            if (subUnit.getUnit() != null) {
+                Unit unit = subUnit.getUnit();
+                hierarchyInfo.append("- 대단원: ").append(unit.getDisplayName()).append("\n");
+            }
+        }
+
+        return hierarchyInfo.toString();
     }
 
     private String buildUserPrompt(AIQuestionGenerationRequest request, MultipartFile document) throws IOException {
