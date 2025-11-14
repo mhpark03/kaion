@@ -4,74 +4,109 @@
   margin: 0 auto;
 }
 
-.content-tabs {
+.quick-add-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 30px;
-  border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 0;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
-.tab-button {
-  padding: 12px 24px;
-  background: transparent;
+.quick-add-btn {
+  flex: 1;
+  padding: 14px 20px;
+  background: white;
+  color: #333;
   border: none;
-  border-bottom: 3px solid transparent;
-  color: #666;
-  font-size: 16px;
-  font-weight: 500;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  position: relative;
-  bottom: -2px;
-}
-
-.tab-button:hover {
-  color: #2196F3;
-  background: rgba(33, 150, 243, 0.05);
-}
-
-.tab-button.active {
-  color: #2196F3;
-  border-bottom-color: #2196F3;
-  font-weight: 600;
-}
-
-.content-body {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.content-filters {
-  margin-bottom: 20px;
-  display: flex;
-  gap: 10px;
+.quick-add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.content-filters select {
+.quick-add-btn.level {
+  border-left: 4px solid #667eea;
+}
+
+.quick-add-btn.grade {
+  border-left: 4px solid #f093fb;
+}
+
+.quick-add-btn.unit {
+  border-left: 4px solid #4facfe;
+}
+
+.quick-add-btn.subunit {
+  border-left: 4px solid #43e97b;
+}
+
+.quick-add-btn.concept {
+  border-left: 4px solid #fa709a;
+}
+
+.content-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.content-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f1f3f5;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.btn-add-section {
   padding: 8px 16px;
-  border: 1px solid #ddd;
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
   border-radius: 6px;
   font-size: 14px;
-  min-width: 200px;
-  background: white;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.content-filters select:focus {
-  outline: none;
-  border-color: #2196F3;
+.btn-add-section:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
 }
 
-.content-list {
+.section-items {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.content-item {
+.section-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -82,7 +117,7 @@
   transition: all 0.2s ease;
 }
 
-.content-item:hover {
+.section-item:hover {
   background: #f1f3f5;
   border-color: #dee2e6;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -106,6 +141,12 @@
   line-height: 1.5;
 }
 
+.item-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .badge {
   display: inline-block;
   padding: 4px 12px;
@@ -114,7 +155,6 @@
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
-  margin-right: 8px;
 }
 
 .order-badge {
@@ -127,11 +167,13 @@
   font-weight: 500;
 }
 
-.empty-message {
+.empty-section {
   text-align: center;
-  padding: 60px 20px;
+  padding: 40px 20px;
   color: #999;
-  font-size: 16px;
+  font-size: 14px;
+  background: #f8f9fa;
+  border-radius: 8px;
 }
 
 .loading {
@@ -148,36 +190,6 @@
   border-radius: 6px;
   margin-bottom: 20px;
   font-size: 14px;
-}
-
-.management-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.management-header h1 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #333;
-}
-
-.btn-create {
-  padding: 10px 20px;
-  background: #2196F3;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-
-.btn-create:hover {
-  background: #1976d2;
 }
 
 .item-actions {
