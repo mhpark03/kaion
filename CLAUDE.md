@@ -182,6 +182,39 @@ curl -X POST http://localhost:8081/api/secrets/openai-api-key \
 - `.env.production`: Production API URL
 - Vite exposes vars prefixed with `VITE_`
 
+### CORS Configuration
+
+**Problem**: Frontend URL changes frequently (especially S3 bucket URLs)
+
+**Solution**: Use environment variables instead of hardcoding URLs
+
+**Configuration Priority:**
+1. Environment Variable `CORS_ALLOWED_ORIGINS` (AWS Elastic Beanstalk)
+2. `application.yml` `cors.allowed-origins`
+3. Default in `SecurityConfig.java` `@Value` annotation
+
+**Setting CORS in AWS Elastic Beanstalk:**
+```bash
+# AWS Console: Configuration → Software → Environment Properties
+Name: CORS_ALLOWED_ORIGINS
+Value: http://localhost:5174,https://your-frontend-url.com
+```
+
+**Format**: Comma-separated list, no spaces
+- ✅ `http://localhost:5174,https://app.example.com`
+- ❌ `http://localhost:5174, https://app.example.com` (space after comma)
+
+**Debugging**: Check CloudWatch logs for "CORS Configuration Initialized" on startup
+
+**Recommended Setup:**
+- **Short-term**: Use environment variables (update via AWS Console, no deployment needed)
+- **Mid-term**: Add CloudFront distribution (fixed URL, HTTPS, caching)
+- **Long-term**: Use custom domain via Route 53 (e.g., `app.yourdomain.com`)
+
+**See detailed guides:**
+- `docs/CORS_CONFIGURATION.md` - Complete CORS setup guide
+- `docs/AWS_CLOUDFRONT_SETUP.md` - CloudFront setup for stable URLs
+
 ## Key API Endpoints
 
 ### Authentication
