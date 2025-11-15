@@ -178,9 +178,7 @@ const QuestionManagement = () => {
   const getQuestionTypeLabel = (type) => {
     const types = {
       MULTIPLE_CHOICE: '객관식',
-      TRUE_FALSE: 'O/X',
-      SHORT_ANSWER: '주관식',
-      ESSAY: '서술형'
+      TRUE_FALSE: 'O/X'
     };
     return types[type] || type;
   };
@@ -371,8 +369,6 @@ const QuestionManagement = () => {
                       >
                         <option value="MULTIPLE_CHOICE">객관식</option>
                         <option value="TRUE_FALSE">O/X</option>
-                        <option value="SHORT_ANSWER">주관식</option>
-                        <option value="ESSAY">서술형</option>
                       </select>
                     </div>
                     <div className="form-group">

@@ -460,8 +460,6 @@ const QuestionCreate = () => {
                 >
                   <option value="MULTIPLE_CHOICE">객관식</option>
                   <option value="TRUE_FALSE">O/X</option>
-                  <option value="SHORT_ANSWER">주관식</option>
-                  <option value="ESSAY">서술형</option>
                 </select>
               </div>
             </div>
