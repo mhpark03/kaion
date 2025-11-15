@@ -1,0 +1,129 @@
+name: Deploy EduTest to AWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # 수동 실행 가능
+
+env:
+  AWS_REGION: ap-northeast-2
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend to Elastic Beanstalk
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x backend/gradlew
+
+      - name: Build with Gradle
+        run: |
+          cd backend
+          ./gradlew clean build -x test
+
+      - name: Get timestamp
+        id: timestamp
+        run: echo "timestamp=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Prepare deployment package
+        run: |
+          cd backend/build/libs
+          # Find the JAR file
+          JAR_FILE=$(ls *.jar | head -1)
+          # Create Procfile for Elastic Beanstalk
+          echo "web: java -jar $JAR_FILE" > Procfile
+          # Create ZIP with JAR and Procfile
+          zip -r ../../../deploy-${{ steps.timestamp.outputs.timestamp }}.zip $JAR_FILE Procfile
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          VERSION_LABEL=edutest-${{ steps.timestamp.outputs.timestamp }}
+          ZIP_FILE=deploy-${{ steps.timestamp.outputs.timestamp }}.zip
+
+          # Upload to S3
+          aws s3 cp $ZIP_FILE s3://elasticbeanstalk-${{ env.AWS_REGION }}-638596943554/kiosk-backend/$ZIP_FILE
+
+          # Create application version with --process flag
+          aws elasticbeanstalk create-application-version \
+            --application-name kiosk-backend \
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket=elasticbeanstalk-${{ env.AWS_REGION }}-638596943554,S3Key=kiosk-backend/$ZIP_FILE \
+            --process
+
+          echo "Application version created: $VERSION_LABEL"
+
+          # Update environment
+          aws elasticbeanstalk update-environment \
+            --environment-name kiosk-backend-prod-v2 \
+            --version-label $VERSION_LABEL
+
+          echo "Deployment initiated. Version: $VERSION_LABEL"
+
+  deploy-frontend:
+    name: Deploy Frontend to S3
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to S3
+        run: |
+          aws s3 sync frontend/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront (if configured)
+        env:
+          CLOUDFRONT_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          if [ -n "$CLOUDFRONT_ID" ]; then
+            echo "Invalidating CloudFront distribution: $CLOUDFRONT_ID"
+            aws cloudfront create-invalidation \
+              --distribution-id $CLOUDFRONT_ID \
+              --paths "/*"
+          else
+            echo "CloudFront distribution ID not configured, skipping cache invalidation"
+          fi
