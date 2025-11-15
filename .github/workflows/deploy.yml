@@ -69,7 +69,27 @@ jobs:
 
           # Wait for version to be processed
           echo "Waiting for application version to be processed..."
-          sleep 5
+          for i in {1..30}; do
+            STATUS=$(aws elasticbeanstalk describe-application-versions \
+              --application-name kiosk-backend \
+              --version-labels $VERSION_LABEL \
+              --query 'ApplicationVersions[0].Status' \
+              --output text)
+
+            echo "Attempt $i: Version status is $STATUS"
+
+            if [ "$STATUS" = "PROCESSED" ]; then
+              echo "Application version is ready!"
+              break
+            fi
+
+            if [ $i -eq 30 ]; then
+              echo "Timeout waiting for version to be processed"
+              exit 1
+            fi
+
+            sleep 2
+          done
 
           # Update environment
           aws elasticbeanstalk update-environment \
