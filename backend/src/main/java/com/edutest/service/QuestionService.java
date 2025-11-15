@@ -98,6 +98,7 @@ public class QuestionService {
                 .points(request.getPoints())
                 .referenceImage(request.getReferenceImage())
                 .referenceDocument(request.getReferenceDocument())
+                .correctAnswer(request.getCorrectAnswer())
                 .concepts(concepts)
                 .build();
 
@@ -174,6 +175,7 @@ public class QuestionService {
         question.setPoints(request.getPoints());
         question.setReferenceImage(request.getReferenceImage());
         question.setReferenceDocument(request.getReferenceDocument());
+        question.setCorrectAnswer(request.getCorrectAnswer());
 
         // Clear and update concepts
         question.getConcepts().clear();
@@ -220,13 +222,22 @@ public class QuestionService {
                         .build())
                 .collect(Collectors.toList());
 
-        // Find correct answer from options
-        String correctAnswer = questionOptionRepository.findByQuestionIdOrderByOptionOrderAsc(question.getId())
-                .stream()
-                .filter(option -> option.getIsCorrect() != null && option.getIsCorrect())
-                .map(QuestionOption::getOptionText)
-                .findFirst()
-                .orElse("");
+        // Find correct answer from options or question entity
+        String correctAnswer = "";
+
+        // For multiple choice/true-false, find from options
+        if (question.getQuestionType() == Question.QuestionType.MULTIPLE_CHOICE ||
+            question.getQuestionType() == Question.QuestionType.TRUE_FALSE) {
+            correctAnswer = questionOptionRepository.findByQuestionIdOrderByOptionOrderAsc(question.getId())
+                    .stream()
+                    .filter(option -> option.getIsCorrect() != null && option.getIsCorrect())
+                    .map(QuestionOption::getOptionText)
+                    .findFirst()
+                    .orElse(question.getCorrectAnswer() != null ? question.getCorrectAnswer() : "");
+        } else {
+            // For short answer/essay, get from question entity
+            correctAnswer = question.getCorrectAnswer() != null ? question.getCorrectAnswer() : "";
+        }
 
         // Convert concepts to DTOs
         List<ConceptDto> conceptDtos = question.getConcepts().stream()

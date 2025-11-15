@@ -66,6 +66,9 @@ public class Question {
     @Column(name = "reference_document")
     private String referenceDocument;  // 참조 문서 파일 경로
 
+    @Column(name = "correct_answer", columnDefinition = "TEXT")
+    private String correctAnswer;  // 정답 (주관식/서술형용, 객관식은 QuestionOption의 isCorrect로 관리)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
