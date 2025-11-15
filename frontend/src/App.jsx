@@ -6,6 +6,8 @@ import Dashboard from './components/Dashboard';
 import ContentManagement from './components/ContentManagement';
 import QuestionManagement from './components/QuestionManagement';
 import QuestionCreate from './components/QuestionCreate';
+import QuestionSolving from './components/QuestionSolving';
+import UserProfile from './components/UserProfile';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
@@ -45,6 +47,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <QuestionCreate />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/question-solving"
+            element={
+              <ProtectedRoute>
+                <QuestionSolving />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
               </ProtectedRoute>
             }
           />

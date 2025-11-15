@@ -63,12 +63,26 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateUser = async (updateData) => {
+    try {
+      const response = await api.put('/users/profile', updateData);
+      const updatedUser = response.data;
+
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      return { success: true };
+    } catch (error) {
+      throw new Error(error.response?.data || 'Profile update failed');
+    }
+  };
+
   const value = {
     user,
     loading,
     login,
     register,
     logout,
+    updateUser,
     isAuthenticated: !!user
   };
 
