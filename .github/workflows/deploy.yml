@@ -63,7 +63,7 @@ jobs:
 
           # Create application version with --process flag
           aws elasticbeanstalk create-application-version \
-            --application-name kiosk-backend \
+            --application-name kiosk-backend-v2 \
             --version-label $VERSION_LABEL \
             --source-bundle S3Bucket=elasticbeanstalk-${{ env.AWS_REGION }}-638596943554,S3Key=kiosk-backend/$ZIP_FILE \
             --region ${{ env.AWS_REGION }} \
@@ -74,7 +74,7 @@ jobs:
           # Wait for version to be processed
           echo "Waiting for application version to be processed..."
           echo "Region: ${{ env.AWS_REGION }}"
-          echo "Application: kiosk-backend"
+          echo "Application: kiosk-backend-v2"
           echo "Version Label: $VERSION_LABEL"
 
           MAX_ATTEMPTS=30
@@ -82,7 +82,7 @@ jobs:
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
             # Get full version info for debugging
             VERSION_INFO=$(aws elasticbeanstalk describe-application-versions \
-              --application-name kiosk-backend \
+              --application-name kiosk-backend-v2 \
               --version-labels $VERSION_LABEL \
               --region ${{ env.AWS_REGION }})
 
@@ -107,7 +107,7 @@ jobs:
               # Verify version one more time before proceeding
               echo "Final verification:"
               aws elasticbeanstalk describe-application-versions \
-                --application-name kiosk-backend \
+                --application-name kiosk-backend-v2 \
                 --version-labels $VERSION_LABEL \
                 --region ${{ env.AWS_REGION }} \
                 --query 'ApplicationVersions[0].[VersionLabel,Status,DateCreated]' \
@@ -139,7 +139,7 @@ jobs:
           # List all versions to verify
           echo "All application versions:"
           aws elasticbeanstalk describe-application-versions \
-            --application-name kiosk-backend \
+            --application-name kiosk-backend-v2 \
             --region ${{ env.AWS_REGION }} \
             --query 'ApplicationVersions[*].[VersionLabel,Status]' \
             --output table | head -20
@@ -159,9 +159,9 @@ jobs:
           echo "  Current Version: $ENV_CURRENT_VERSION"
           echo "  Target Version: $VERSION_LABEL"
 
-          if [ "$ENV_APP_NAME" != "kiosk-backend" ]; then
-            echo "⚠ WARNING: Environment belongs to application '$ENV_APP_NAME', not 'kiosk-backend'"
-            echo "The version was created under 'kiosk-backend' but environment expects '$ENV_APP_NAME'"
+          if [ "$ENV_APP_NAME" != "kiosk-backend-v2" ]; then
+            echo "⚠ WARNING: Environment belongs to application '$ENV_APP_NAME', not 'kiosk-backend-v2'"
+            echo "The version was created under 'kiosk-backend-v2' but environment expects '$ENV_APP_NAME'"
             echo "This mismatch is the root cause of the error!"
             exit 1
           fi
