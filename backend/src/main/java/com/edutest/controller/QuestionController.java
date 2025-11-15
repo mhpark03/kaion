@@ -150,15 +150,23 @@ public class QuestionController {
     /**
      * Serve AI-generated images from S3
      * This endpoint allows the frontend to access images stored in S3
+     * Images are organized by SubUnit: /images/ai-generated/{subunit-folder}/{filename}
      *
      * Security improvements:
-     * - Validates filename format to prevent path traversal attacks
+     * - Validates folder and filename format to prevent path traversal attacks
      * - Downloads from S3 instead of local filesystem (persistent storage)
      * - Adds caching headers for better performance
      */
-    @GetMapping("/images/ai-generated/{filename:.+}")
-    public ResponseEntity<Resource> serveAIGeneratedImage(@PathVariable String filename) {
+    @GetMapping("/images/ai-generated/{folder}/{filename:.+}")
+    public ResponseEntity<Resource> serveAIGeneratedImage(
+            @PathVariable String folder,
+            @PathVariable String filename) {
         try {
+            // Security: Validate folder format (must be: subunit-{id} or no-subunit)
+            if (!folder.matches("subunit-\\d+") && !folder.equals("no-subunit")) {
+                return ResponseEntity.badRequest().build();
+            }
+
             // Security: Validate filename to prevent path traversal attacks
             if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
                 return ResponseEntity.badRequest().build();
@@ -169,8 +177,8 @@ public class QuestionController {
                 return ResponseEntity.badRequest().build();
             }
 
-            // Download image from S3
-            String s3Key = "question-images/ai-generated/" + filename;
+            // Download image from S3 with SubUnit folder structure
+            String s3Key = "question-images/ai-generated/" + folder + "/" + filename;
             byte[] imageBytes = secretService.downloadImage(s3Key);
 
             // Create resource from byte array
