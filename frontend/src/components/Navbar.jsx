@@ -27,6 +27,10 @@ const Navbar = () => {
           <span className={`nav-link ${isActive('/dashboard')}`}>대시보드</span>
         </div>
 
+        <div className="navbar-item" onClick={() => navigate('/question-solving')}>
+          <span className={`nav-link ${isActive('/question-solving')}`}>문제 풀기</span>
+        </div>
+
         {(user?.role === 'ADMIN' || user?.role === 'TEACHER') && (
           <>
             <div className="navbar-item" onClick={() => navigate('/content')}>
@@ -34,14 +38,16 @@ const Navbar = () => {
             </div>
 
             <div className="navbar-item" onClick={() => navigate('/questions')}>
-              <span className={`nav-link ${isActive('/questions')}`}>문제</span>
+              <span className={`nav-link ${isActive('/questions')}`}>문제 관리</span>
             </div>
           </>
         )}
       </div>
 
       <div className="navbar-user">
-        <span className="user-name">{user?.fullName}님</span>
+        <span className="user-name clickable" onClick={() => navigate('/profile')}>
+          {user?.fullName}님
+        </span>
         <span className="user-role">{getRoleDisplay(user?.role)}</span>
         <button onClick={handleLogout} className="btn-logout">
           로그아웃

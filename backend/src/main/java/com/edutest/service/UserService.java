@@ -3,6 +3,8 @@ package com.edutest.service;
 import com.edutest.dto.AuthResponse;
 import com.edutest.dto.LoginRequest;
 import com.edutest.dto.RegisterRequest;
+import com.edutest.dto.UserProfileUpdateRequest;
+import com.edutest.dto.UserResponse;
 import com.edutest.entity.Grade;
 import com.edutest.entity.Level;
 import com.edutest.entity.User;
@@ -113,5 +115,92 @@ public class UserService {
                 .fullName(user.getFullName())
                 .role(user.getRole())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse getUserByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return buildUserResponse(user);
+    }
+
+    @Transactional
+    public UserResponse updateProfile(String username, UserProfileUpdateRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Update basic info
+        if (request.getFullName() != null && !request.getFullName().isEmpty()) {
+            user.setFullName(request.getFullName());
+        }
+
+        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+            // Check if email is already taken by another user
+            userRepository.findByEmail(request.getEmail())
+                    .ifPresent(existingUser -> {
+                        if (!existingUser.getId().equals(user.getId())) {
+                            throw new IllegalArgumentException("Email already exists");
+                        }
+                    });
+            user.setEmail(request.getEmail());
+        }
+
+        // Update level and grade
+        if (request.getLevelId() != null) {
+            Level level = levelRepository.findById(request.getLevelId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid level ID"));
+            user.setLevel(level);
+        }
+
+        if (request.getGradeId() != null) {
+            Grade grade = gradeRepository.findById(request.getGradeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid grade ID"));
+            user.setGrade(grade);
+        }
+
+        // Update proficiency level
+        if (request.getProficiencyLevel() != null) {
+            user.setProficiencyLevel(request.getProficiencyLevel());
+        }
+
+        // Update password if provided
+        if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().isEmpty()) {
+                throw new IllegalArgumentException("Current password is required");
+            }
+
+            if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("Current password is incorrect");
+            }
+
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+
+        userRepository.save(user);
+
+        return buildUserResponse(user);
+    }
+
+    private UserResponse buildUserResponse(User user) {
+        UserResponse.UserResponseBuilder builder = UserResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole())
+                .proficiencyLevel(user.getProficiencyLevel());
+
+        if (user.getLevel() != null) {
+            builder.levelId(user.getLevel().getId())
+                    .levelName(user.getLevel().getName());
+        }
+
+        if (user.getGrade() != null) {
+            builder.gradeId(user.getGrade().getId())
+                    .gradeName(user.getGrade().getName());
+        }
+
+        return builder.build();
     }
 }

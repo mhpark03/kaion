@@ -132,6 +132,16 @@
   font-size: 14px;
 }
 
+.user-name.clickable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.user-name.clickable:hover {
+  color: #667eea;
+  text-decoration: underline;
+}
+
 .user-role {
   padding: 4px 12px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
