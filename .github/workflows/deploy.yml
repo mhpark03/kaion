@@ -41,8 +41,10 @@ jobs:
           cd backend/build/libs
           # Find the JAR file
           JAR_FILE=$(ls *.jar | head -1)
-          # Copy JAR to root with timestamped name
-          cp $JAR_FILE ../../../edutest-${{ steps.timestamp.outputs.timestamp }}.jar
+          # Create Procfile for Elastic Beanstalk
+          echo "web: java -jar $JAR_FILE" > Procfile
+          # Create ZIP with JAR and Procfile
+          zip -r ../../../deploy-${{ steps.timestamp.outputs.timestamp }}.zip $JAR_FILE Procfile
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
@@ -53,7 +55,7 @@ jobs:
           environment_name: kiosk-backend-prod-v2
           region: ${{ env.AWS_REGION }}
           version_label: edutest-${{ steps.timestamp.outputs.timestamp }}
-          deployment_package: edutest-${{ steps.timestamp.outputs.timestamp }}.jar
+          deployment_package: deploy-${{ steps.timestamp.outputs.timestamp }}.zip
           wait_for_deployment: true
           wait_for_environment_recovery: 300
 
