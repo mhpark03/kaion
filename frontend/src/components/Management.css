@@ -281,6 +281,15 @@
   cursor: pointer;
 }
 
+.filters .filter-input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 2px solid white;
+  border-radius: 8px;
+  font-size: 14px;
+  background: white;
+}
+
 .questions-list {
   display: flex;
   flex-direction: column;

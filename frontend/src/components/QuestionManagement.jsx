@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { questionService } from '../services/questionService';
 import { levelService } from '../services/levelService';
@@ -15,6 +15,9 @@ const QuestionManagement = () => {
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [error, setError] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
+  const [filterConcept, setFilterConcept] = useState('');
+  const [filterType, setFilterType] = useState('');
+  const [filterDifficulty, setFilterDifficulty] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
 
@@ -50,9 +53,21 @@ const QuestionManagement = () => {
   }, [searchParams, showModal, setSearchParams]);
 
   useEffect(() => {
-    loadQuestions();
     setCurrentPage(1); // Reset to first page when filter changes
-  }, [filterLevel]);
+  }, [filterLevel, filterConcept, filterType, filterDifficulty]);
+
+  // Apply filters using useMemo
+  const filteredQuestions = useMemo(() => {
+    return questions.filter(question => {
+      if (filterLevel && question.levelId !== parseInt(filterLevel)) return false;
+      if (filterConcept && !(question.concepts && question.concepts.some(c =>
+        (c.displayName || c.name).toLowerCase().includes(filterConcept.toLowerCase())
+      ))) return false;
+      if (filterType && question.questionType !== filterType) return false;
+      if (filterDifficulty && question.difficulty !== filterDifficulty) return false;
+      return true;
+    });
+  }, [questions, filterLevel, filterConcept, filterType, filterDifficulty]);
 
   const loadData = async () => {
     try {
@@ -68,9 +83,7 @@ const QuestionManagement = () => {
 
   const loadQuestions = async () => {
     try {
-      const params = {};
-      if (filterLevel) params.levelId = filterLevel;
-      const response = await questionService.getAll(params);
+      const response = await questionService.getAll();
       setQuestions(response.data);
     } catch (error) {
       setError('문제 목록을 불러오는데 실패했습니다');
@@ -238,10 +251,33 @@ const QuestionManagement = () => {
 
         <div className="filters">
           <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
-            <option value="">전체 난이도</option>
+            <option value="">전체 학년</option>
             {levels.map((l) => (
-              <option key={l.id} value={l.id}>{l.name}</option>
+              <option key={l.id} value={l.id}>{l.displayName || l.name}</option>
             ))}
+          </select>
+
+          <input
+            type="text"
+            placeholder="핵심개념 검색..."
+            value={filterConcept}
+            onChange={(e) => setFilterConcept(e.target.value)}
+            className="filter-input"
+          />
+
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+            <option value="">전체 유형</option>
+            <option value="MULTIPLE_CHOICE">객관식</option>
+            <option value="TRUE_FALSE">O/X</option>
+          </select>
+
+          <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)}>
+            <option value="">전체 난이도</option>
+            <option value="VERY_EASY">매우 쉬움</option>
+            <option value="EASY">쉬움</option>
+            <option value="MEDIUM">보통</option>
+            <option value="HARD">어려움</option>
+            <option value="VERY_HARD">매우 어려움</option>
           </select>
         </div>
 
@@ -265,7 +301,7 @@ const QuestionManagement = () => {
               {(() => {
                 const indexOfLastItem = currentPage * itemsPerPage;
                 const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-                const currentItems = questions.slice(indexOfFirstItem, indexOfLastItem);
+                const currentItems = filteredQuestions.slice(indexOfFirstItem, indexOfLastItem);
 
                 const getDifficultyLabel = (difficulty) => {
                   const difficultyMap = {
@@ -331,7 +367,7 @@ const QuestionManagement = () => {
           </table>
 
           {/* Pagination */}
-          {questions.length > itemsPerPage && (
+          {filteredQuestions.length > itemsPerPage && (
             <div className="pagination">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -341,7 +377,7 @@ const QuestionManagement = () => {
                 이전
               </button>
 
-              {Array.from({ length: Math.ceil(questions.length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
+              {Array.from({ length: Math.ceil(filteredQuestions.length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
                 <button
                   key={pageNum}
                   onClick={() => setCurrentPage(pageNum)}
@@ -352,8 +388,8 @@ const QuestionManagement = () => {
               ))}
 
               <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(questions.length / itemsPerPage)))}
-                disabled={currentPage === Math.ceil(questions.length / itemsPerPage)}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredQuestions.length / itemsPerPage)))}
+                disabled={currentPage === Math.ceil(filteredQuestions.length / itemsPerPage)}
                 className="pagination-btn"
               >
                 다음
