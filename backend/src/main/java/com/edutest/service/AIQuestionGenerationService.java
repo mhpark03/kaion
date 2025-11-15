@@ -93,7 +93,7 @@ public class AIQuestionGenerationService {
         // Generate image if requested
         if (request.isGenerateImage()) {
             try {
-                String imageUrl = generateQuestionImage(response.getQuestionText(), concept.getName());
+                String imageUrl = generateQuestionImage(response.getQuestionText(), concept);
                 response.setGeneratedImageUrl(imageUrl);
             } catch (Exception e) {
                 log.error("Failed to generate image with DALL-E", e);
@@ -332,7 +332,7 @@ public class AIQuestionGenerationService {
         }
     }
 
-    private String generateQuestionImage(String questionText, String conceptName) {
+    private String generateQuestionImage(String questionText, Concept concept) {
         try {
             // Get API key with fallback logic
             String apiKey = getOpenAIApiKey();
@@ -348,7 +348,7 @@ public class AIQuestionGenerationService {
                 "Educational illustration for a science question about '%s'. " +
                 "Style: clean, simple, educational diagram. " +
                 "Content related to: %s",
-                conceptName,
+                concept.getName(),
                 questionText.substring(0, Math.min(questionText.length(), 200))
             );
 
@@ -371,9 +371,15 @@ public class AIQuestionGenerationService {
             JsonNode root = objectMapper.readTree(response.getBody());
             String imageUrl = root.path("data").get(0).path("url").asText();
 
-            // Download the image from OpenAI and save it locally to avoid CORS issues
-            log.info("Downloading generated image from OpenAI...");
-            String savedImagePath = downloadAndSaveImage(imageUrl);
+            // Extract SubUnit ID for folder organization
+            Long subUnitId = null;
+            if (concept.getSubUnit() != null) {
+                subUnitId = concept.getSubUnit().getId();
+            }
+
+            // Download the image from OpenAI and save it to S3 (organized by SubUnit)
+            log.info("Downloading generated image from OpenAI and uploading to S3...");
+            String savedImagePath = downloadAndSaveImage(imageUrl, subUnitId);
 
             return savedImagePath;
         } catch (Exception e) {
@@ -383,10 +389,14 @@ public class AIQuestionGenerationService {
     }
 
     /**
-     * Download image from URL and save to local storage
-     * Returns the relative path that can be accessed via the backend API
+     * Download image from OpenAI URL and save to S3
+     * Images are organized by SubUnit for better file management
+     *
+     * @param imageUrl The OpenAI image URL to download
+     * @param subUnitId The SubUnit ID for folder organization (null if not available)
+     * @return The relative path that can be accessed via the backend API
      */
-    private String downloadAndSaveImage(String imageUrl) throws IOException {
+    private String downloadAndSaveImage(String imageUrl, Long subUnitId) throws IOException {
         try {
             // Download image from OpenAI URL
             ResponseEntity<byte[]> imageResponse = restTemplate.getForEntity(imageUrl, byte[].class);
@@ -396,23 +406,22 @@ public class AIQuestionGenerationService {
                 throw new IOException("Failed to download image from OpenAI");
             }
 
-            // Create upload directory if it doesn't exist
-            Path uploadPath = Paths.get(uploadDir, "ai-generated");
-            Files.createDirectories(uploadPath);
-
             // Generate unique filename
             String filename = "dalle_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString() + ".png";
-            Path filePath = uploadPath.resolve(filename);
 
-            // Save image to local storage
-            Files.write(filePath, imageBytes);
+            // Build S3 path with SubUnit folder structure
+            String subUnitFolder = (subUnitId != null) ? "subunit-" + subUnitId : "no-subunit";
+            String s3Key = "question-images/ai-generated/" + subUnitFolder + "/" + filename;
 
-            log.info("Image saved successfully to: {}", filePath);
+            // Upload to S3
+            secretService.uploadImage(s3Key, imageBytes, "image/png");
+
+            log.info("Image uploaded successfully to S3: {} (SubUnit: {})", s3Key, subUnitId);
 
             // Return relative path that can be accessed via API
-            return "/api/questions/images/ai-generated/" + filename;
+            return "/api/questions/images/ai-generated/" + subUnitFolder + "/" + filename;
         } catch (Exception e) {
-            log.error("Failed to download and save image: {}", e.getMessage(), e);
+            log.error("Failed to download and save image to S3: {}", e.getMessage(), e);
             throw new IOException("Failed to save generated image: " + e.getMessage(), e);
         }
     }

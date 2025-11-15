@@ -183,4 +183,86 @@ public class SecretService {
             throw new RuntimeException("Failed to delete secret from S3: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Upload an image to S3
+     * @param s3Key The S3 key (path) where the image will be stored
+     * @param imageBytes The image data as byte array
+     * @param contentType The content type (e.g., "image/png")
+     */
+    public void uploadImage(String s3Key, byte[] imageBytes, String contentType) {
+        if (s3Client == null) {
+            throw new RuntimeException("S3 is not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.");
+        }
+
+        try {
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .contentType(contentType)
+                    .contentLength((long) imageBytes.length)
+                    .build();
+
+            s3Client.putObject(putObjectRequest, RequestBody.fromBytes(imageBytes));
+
+            log.info("Image uploaded successfully to S3 at: {}", s3Key);
+        } catch (S3Exception e) {
+            log.error("Failed to upload image to S3: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to upload image to S3: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Download an image from S3
+     * @param s3Key The S3 key (path) of the image
+     * @return The image data as byte array
+     */
+    public byte[] downloadImage(String s3Key) {
+        if (s3Client == null) {
+            throw new RuntimeException("S3 is not configured. Cannot download image.");
+        }
+
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .build();
+
+            byte[] imageBytes = s3Client.getObjectAsBytes(getObjectRequest).asByteArray();
+            log.info("Image downloaded successfully from S3: {}", s3Key);
+            return imageBytes;
+        } catch (NoSuchKeyException e) {
+            log.warn("Image not found in S3 at: {}", s3Key);
+            throw new RuntimeException("Image not found: " + s3Key, e);
+        } catch (S3Exception e) {
+            log.error("Failed to download image from S3: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to download image from S3: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Check if an image exists in S3
+     * @param s3Key The S3 key (path) of the image
+     * @return true if image exists, false otherwise
+     */
+    public boolean imageExists(String s3Key) {
+        if (s3Client == null) {
+            return false;
+        }
+
+        try {
+            HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .build();
+
+            s3Client.headObject(headObjectRequest);
+            return true;
+        } catch (NoSuchKeyException e) {
+            return false;
+        } catch (S3Exception e) {
+            log.error("Error checking image existence: {}", e.getMessage(), e);
+            return false;
+        }
+    }
 }

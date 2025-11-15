@@ -7,11 +7,12 @@ import com.edutest.dto.QuestionDto;
 import com.edutest.service.AIQuestionGenerationService;
 import com.edutest.service.FileStorageService;
 import com.edutest.service.QuestionService;
+import com.edutest.service.SecretService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +20,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -31,6 +30,7 @@ public class QuestionController {
     private final QuestionService questionService;
     private final FileStorageService fileStorageService;
     private final AIQuestionGenerationService aiQuestionGenerationService;
+    private final SecretService secretService;
     private final ObjectMapper objectMapper;
 
     @Value("${file.upload-dir}")
@@ -148,25 +148,52 @@ public class QuestionController {
     }
 
     /**
-     * Serve AI-generated images
-     * This endpoint allows the frontend to access images downloaded from OpenAI
+     * Serve AI-generated images from S3
+     * This endpoint allows the frontend to access images stored in S3
+     * Images are organized by SubUnit: /images/ai-generated/{subunit-folder}/{filename}
+     *
+     * Security improvements:
+     * - Validates folder and filename format to prevent path traversal attacks
+     * - Downloads from S3 instead of local filesystem (persistent storage)
+     * - Adds caching headers for better performance
      */
-    @GetMapping("/images/ai-generated/{filename:.+}")
-    public ResponseEntity<Resource> serveAIGeneratedImage(@PathVariable String filename) {
+    @GetMapping("/images/ai-generated/{folder}/{filename:.+}")
+    public ResponseEntity<Resource> serveAIGeneratedImage(
+            @PathVariable String folder,
+            @PathVariable String filename) {
         try {
-            Path filePath = Paths.get(uploadDir, "ai-generated", filename);
-            Resource resource = new UrlResource(filePath.toUri());
-
-            if (!resource.exists() || !resource.isReadable()) {
-                return ResponseEntity.notFound().build();
+            // Security: Validate folder format (must be: subunit-{id} or no-subunit)
+            if (!folder.matches("subunit-\\d+") && !folder.equals("no-subunit")) {
+                return ResponseEntity.badRequest().build();
             }
+
+            // Security: Validate filename to prevent path traversal attacks
+            if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            // Security: Validate filename format (must match: dalle_<timestamp>_<uuid>.png)
+            if (!filename.matches("dalle_\\d+_[a-f0-9\\-]+\\.png")) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            // Download image from S3 with SubUnit folder structure
+            String s3Key = "question-images/ai-generated/" + folder + "/" + filename;
+            byte[] imageBytes = secretService.downloadImage(s3Key);
+
+            // Create resource from byte array
+            ByteArrayResource resource = new ByteArrayResource(imageBytes);
 
             return ResponseEntity.ok()
                     .contentType(MediaType.IMAGE_PNG)
                     .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000") // Cache for 1 year
                     .body(resource);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            // Image not found in S3 or other error
             return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(500).build();
         }
     }
 }
