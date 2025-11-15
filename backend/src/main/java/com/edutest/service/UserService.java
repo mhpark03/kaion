@@ -3,7 +3,11 @@ package com.edutest.service;
 import com.edutest.dto.AuthResponse;
 import com.edutest.dto.LoginRequest;
 import com.edutest.dto.RegisterRequest;
+import com.edutest.entity.Grade;
+import com.edutest.entity.Level;
 import com.edutest.entity.User;
+import com.edutest.repository.GradeRepository;
+import com.edutest.repository.LevelRepository;
 import com.edutest.repository.UserRepository;
 import com.edutest.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final LevelRepository levelRepository;
+    private final GradeRepository gradeRepository;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -38,12 +44,29 @@ public class UserService {
                 ? request.getFullName()
                 : request.getUsername();
 
+        // Level과 Grade 조회
+        Level level = null;
+        Grade grade = null;
+
+        if (request.getLevelId() != null) {
+            level = levelRepository.findById(request.getLevelId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid level ID"));
+        }
+
+        if (request.getGradeId() != null) {
+            grade = gradeRepository.findById(request.getGradeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid grade ID"));
+        }
+
         User user = User.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .fullName(fullName)
                 .role(request.getRole() != null ? request.getRole() : "STUDENT")
+                .level(level)
+                .grade(grade)
+                .proficiencyLevel(request.getProficiencyLevel())
                 .active(true)
                 .build();
 

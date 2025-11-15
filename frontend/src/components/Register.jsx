@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { levelService } from '../services/levelService';
+import { gradeService } from '../services/gradeService';
+import { DIFFICULTY_LEVELS } from '../constants/difficulty';
 import './Auth.css';
 
 const Register = () => {
@@ -9,13 +12,58 @@ const Register = () => {
     password: '',
     confirmPassword: '',
     email: '',
-    role: 'STUDENT'
+    role: 'STUDENT',
+    levelId: '',
+    gradeId: '',
+    proficiencyLevel: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [levels, setLevels] = useState([]);
+  const [grades, setGrades] = useState([]);
+  const [allGrades, setAllGrades] = useState([]);
 
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  // Load levels and grades on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [levelsResponse, gradesResponse] = await Promise.all([
+          levelService.getAll(),
+          gradeService.getAll()
+        ]);
+        setLevels(levelsResponse.data);
+        setAllGrades(gradesResponse.data);
+      } catch (err) {
+        console.error('Failed to load levels and grades:', err);
+      }
+    };
+    loadData();
+  }, []);
+
+  // Filter grades when level changes
+  useEffect(() => {
+    if (formData.levelId) {
+      const filteredGrades = allGrades.filter(
+        grade => grade.levelId === parseInt(formData.levelId)
+      );
+      setGrades(filteredGrades);
+      // Reset grade if it doesn't belong to selected level
+      if (formData.gradeId) {
+        const gradeExists = filteredGrades.some(
+          g => g.id === parseInt(formData.gradeId)
+        );
+        if (!gradeExists) {
+          setFormData(prev => ({ ...prev, gradeId: '' }));
+        }
+      }
+    } else {
+      setGrades([]);
+      setFormData(prev => ({ ...prev, gradeId: '' }));
+    }
+  }, [formData.levelId, allGrades]);
 
   const handleChange = (e) => {
     setFormData({
@@ -44,6 +92,11 @@ const Register = () => {
     // username을 fullName으로도 사용
     const { confirmPassword, ...registerData } = formData;
     registerData.fullName = registerData.username;
+
+    // Convert levelId and gradeId to numbers (or null if empty)
+    registerData.levelId = registerData.levelId ? parseInt(registerData.levelId) : null;
+    registerData.gradeId = registerData.gradeId ? parseInt(registerData.gradeId) : null;
+
     const result = await register(registerData);
 
     if (result.success) {
@@ -102,6 +155,60 @@ const Register = () => {
               <option value="STUDENT">학생</option>
               <option value="TEACHER">선생님</option>
               <option value="ADMIN">관리자</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="levelId">교육과정</label>
+            <select
+              id="levelId"
+              name="levelId"
+              value={formData.levelId}
+              onChange={handleChange}
+              disabled={loading}
+            >
+              <option value="">선택하세요</option>
+              {levels.map(level => (
+                <option key={level.id} value={level.id}>
+                  {level.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="gradeId">학년</label>
+            <select
+              id="gradeId"
+              name="gradeId"
+              value={formData.gradeId}
+              onChange={handleChange}
+              disabled={loading || !formData.levelId}
+            >
+              <option value="">선택하세요</option>
+              {grades.map(grade => (
+                <option key={grade.id} value={grade.id}>
+                  {grade.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="proficiencyLevel">학습 수준</label>
+            <select
+              id="proficiencyLevel"
+              name="proficiencyLevel"
+              value={formData.proficiencyLevel}
+              onChange={handleChange}
+              disabled={loading}
+            >
+              <option value="">선택하세요</option>
+              {DIFFICULTY_LEVELS.map(level => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
+              ))}
             </select>
           </div>
 

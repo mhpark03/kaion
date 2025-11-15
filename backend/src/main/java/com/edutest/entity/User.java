@@ -40,6 +40,17 @@ public class User {
     @Column(nullable = false, length = 20)
     private String role = "STUDENT";
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "level_id")
+    private Level level;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grade_id")
+    private Grade grade;
+
+    @Column(name = "proficiency_level", length = 20)
+    private String proficiencyLevel;  // VERY_EASY, EASY, MEDIUM, HARD, VERY_HARD
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
