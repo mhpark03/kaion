@@ -70,12 +70,43 @@ jobs:
 
           echo "Application version created: $VERSION_LABEL"
 
-          # Update environment
+          # Wait for version to be processed
+          echo "Waiting for application version to be processed..."
+          MAX_ATTEMPTS=30
+          ATTEMPT=0
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            STATUS=$(aws elasticbeanstalk describe-application-versions \
+              --application-name kiosk-backend \
+              --version-labels $VERSION_LABEL \
+              --query 'ApplicationVersions[0].Status' \
+              --output text)
+
+            echo "Current status: $STATUS (attempt $((ATTEMPT+1))/$MAX_ATTEMPTS)"
+
+            if [ "$STATUS" = "PROCESSED" ]; then
+              echo "✓ Application version is ready!"
+              break
+            elif [ "$STATUS" = "FAILED" ]; then
+              echo "✗ Error: Application version processing failed"
+              exit 1
+            fi
+
+            sleep 10
+            ATTEMPT=$((ATTEMPT+1))
+          done
+
+          if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+            echo "✗ Error: Timeout waiting for application version to be processed"
+            exit 1
+          fi
+
+          # Now update environment
+          echo "Updating environment with version: $VERSION_LABEL"
           aws elasticbeanstalk update-environment \
             --environment-name kiosk-backend-prod-v2 \
             --version-label $VERSION_LABEL
 
-          echo "Deployment initiated. Version: $VERSION_LABEL"
+          echo "✓ Deployment initiated successfully. Version: $VERSION_LABEL"
 
   deploy-frontend:
     name: Deploy Frontend to S3
