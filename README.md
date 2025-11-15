@@ -1,29 +1,40 @@
 # 교육 컨텐츠 관리 시스템 (EduTest)
 
-과목별/레벨별 문제를 관리하고 학습자의 풀이 결과를 추적하는 교육용 웹 서비스
+AI 기반 한국 과학 교육을 위한 계층적 문제 관리 시스템
 
 ## 프로젝트 개요
 
 이 시스템은 다음 기능을 제공합니다:
-- 📚 과목 및 난이도 레벨 관리
+- 📚 5단계 계층 구조 (교육과정 → 학년 → 과목 → 대단원 → 소단원 → 핵심개념)
+- 🤖 OpenAI GPT-5 기반 AI 문제 자동 생성
 - ✏️ 문제 생성 및 관리 (객관식, O/X, 주관식, 서술형)
-- 🎯 과목/레벨 선택 후 문제 풀이
-- 📊 개인별 풀이 결과 저장 및 통계 분석
+- 🎯 난이도별 문제 분류 (5단계)
+- 📊 핵심개념별 문제 통계 및 난이도 분포
 - 👥 역할 기반 접근 제어 (학생, 선생님, 관리자)
+- ☁️ AWS 클라우드 배포 지원
 
 ## 기술 스택
 
 ### Backend
-- Spring Boot 3.x (Java 17+)
-- MySQL 8.0+
+- Spring Boot 3.2.0 (Java 17)
+- MySQL 8.0+ (utf8mb4)
 - Spring Security + JWT
 - JPA (Hibernate)
+- OpenAI API (GPT-5 mini)
+- AWS S3 (Secret Management)
 
 ### Frontend
-- React 18
-- Vite
-- Axios
-- React Router
+- React 18.3.1
+- Vite 5.4.1
+- Axios 1.7.2
+- React Router 6.26.0
+
+### Infrastructure
+- AWS Elastic Beanstalk (Backend)
+- AWS RDS MySQL (Database)
+- AWS S3 (Frontend Hosting + Secrets)
+- AWS CloudFront (Optional CDN)
+- GitHub Actions (CI/CD)
 
 ## 프로젝트 구조
 
@@ -103,27 +114,39 @@ npm run dev
 - 과목별/레벨별 성적 분석
 - 풀이 히스토리
 
-## API 문서
+## 배포
 
-API 엔드포인트 및 사용법은 [API_REFERENCE.md](docs/API_REFERENCE.md)를 참조하세요.
+### GitHub Actions 자동 배포
 
-## 데이터베이스 스키마
+main 브랜치에 푸시하면 자동으로 AWS에 배포됩니다.
 
-자세한 데이터베이스 구조는 [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md)를 참조하세요.
+자세한 설정 방법은 [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md)를 참조하세요.
 
-## 개발 로드맵
+### 수동 배포
+
+AWS Elastic Beanstalk 수동 배포는 [DEPLOYMENT.md](DEPLOYMENT.md)를 참조하세요.
+
+## 문서
+
+- [CLAUDE.md](CLAUDE.md) - Claude Code를 위한 프로젝트 가이드
+- [DEPLOYMENT.md](DEPLOYMENT.md) - AWS 배포 가이드
+- [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md) - GitHub Actions 자동 배포 설정
+- [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) - 데이터베이스 스키마
+
+## 주요 기능 (완료)
 
 - [x] 프로젝트 구조 설계
 - [x] 데이터베이스 스키마 설계
-- [ ] 백엔드 초기 설정
-- [ ] 프론트엔드 초기 설정
-- [ ] 인증 시스템 구현
-- [ ] 과목/레벨 관리 기능
-- [ ] 문제 관리 기능
-- [ ] 문제 풀이 기능
-- [ ] 결과 관리 및 통계
-- [ ] UI/UX 개선
-- [ ] 배포
+- [x] 백엔드 초기 설정
+- [x] 프론트엔드 초기 설정
+- [x] 인증 시스템 구현 (JWT)
+- [x] 5단계 교육과정 계층 관리
+- [x] 문제 관리 기능 (CRUD)
+- [x] AI 문제 생성 기능 (GPT-5)
+- [x] 핵심개념별 문제 통계
+- [x] 난이도별 필터링 및 페이지네이션
+- [x] UI/UX 구현
+- [x] AWS 배포 자동화
 
 ## 라이선스
 
