@@ -144,6 +144,30 @@ jobs:
             --query 'ApplicationVersions[*].[VersionLabel,Status]' \
             --output table | head -20
 
+          # Verify which application the environment belongs to
+          echo "Verifying environment configuration..."
+          ENV_INFO=$(aws elasticbeanstalk describe-environments \
+            --environment-names kiosk-backend-prod-v2 \
+            --region ${{ env.AWS_REGION }})
+
+          ENV_APP_NAME=$(echo "$ENV_INFO" | jq -r '.Environments[0].ApplicationName')
+          ENV_CURRENT_VERSION=$(echo "$ENV_INFO" | jq -r '.Environments[0].VersionLabel')
+
+          echo "Environment Details:"
+          echo "  Environment Name: kiosk-backend-prod-v2"
+          echo "  Application Name: $ENV_APP_NAME"
+          echo "  Current Version: $ENV_CURRENT_VERSION"
+          echo "  Target Version: $VERSION_LABEL"
+
+          if [ "$ENV_APP_NAME" != "kiosk-backend" ]; then
+            echo "⚠ WARNING: Environment belongs to application '$ENV_APP_NAME', not 'kiosk-backend'"
+            echo "The version was created under 'kiosk-backend' but environment expects '$ENV_APP_NAME'"
+            echo "This mismatch is the root cause of the error!"
+            exit 1
+          fi
+
+          echo "✓ Application name matches!"
+
           # Now update environment
           echo "Updating environment with version: $VERSION_LABEL"
           aws elasticbeanstalk update-environment \
