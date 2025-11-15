@@ -25,6 +25,10 @@ const ContentManagement = () => {
   const [filterGradeId, setFilterGradeId] = useState('');
   const [searchText, setSearchText] = useState('');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
@@ -43,6 +47,10 @@ const ContentManagement = () => {
   useEffect(() => {
     loadAllData();
   }, []);
+
+  useEffect(() => {
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [filterLevelId, filterGradeId, searchText]);
 
   const loadAllData = async () => {
     setLoading(true);
@@ -368,26 +376,33 @@ const ContentManagement = () => {
   };
 
   const renderTable = (title, items, type) => {
+    // Pagination
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+    const currentItems = items.slice(indexOfFirstItem, indexOfLastItem);
+    const totalPages = Math.ceil(items.length / itemsPerPage);
+
     return (
       <div className="content-section">
         {items.length === 0 ? (
           <div className="empty-section">등록된 {title}이(가) 없습니다</div>
         ) : (
-          <div className="table-wrapper">
-            <table className="content-table">
-              <thead>
-                <tr>
-                  <th>교육과정</th>
-                  {type !== 'level' && <th>학년</th>}
-                  {(type === 'unit' || type === 'subunit' || type === 'concept') && <th>대단원</th>}
-                  {(type === 'subunit' || type === 'concept') && <th>소단원</th>}
-                  {type === 'concept' && <th>핵심개념</th>}
-                  {type === 'concept' && <th className="count-header">문제수</th>}
-                  <th className="action-header">동작</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => (
+          <>
+            <div className="table-wrapper">
+              <table className="content-table">
+                <thead>
+                  <tr>
+                    <th>교육과정</th>
+                    {type !== 'level' && <th>학년</th>}
+                    {(type === 'unit' || type === 'subunit' || type === 'concept') && <th>대단원</th>}
+                    {(type === 'subunit' || type === 'concept') && <th>소단원</th>}
+                    {type === 'concept' && <th>핵심개념</th>}
+                    {type === 'concept' && <th className="count-header">문제수</th>}
+                    <th className="action-header">동작</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentItems.map((item, index) => (
                   <tr key={item.id}>
                     <td>{type === 'level' ? (item.displayName || item.name) : item.levelDisplayName}</td>
                     {type === 'grade' && <td className="name-cell">{item.displayName || item.name}</td>}
@@ -439,7 +454,39 @@ const ContentManagement = () => {
                 ))}
               </tbody>
             </table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="pagination-btn"
+                >
+                  이전
+                </button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                  >
+                    {pageNum}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn"
+                >
+                  다음
+                </button>
+              </div>
+            )}
           </div>
+          </>
         )}
       </div>
     );
