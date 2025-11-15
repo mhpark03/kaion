@@ -36,6 +36,13 @@ jobs:
         id: timestamp
         run: echo "timestamp=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
       - name: Prepare deployment package
         run: |
           cd backend/build/libs
@@ -47,17 +54,25 @@ jobs:
           zip -r ../../../deploy-${{ steps.timestamp.outputs.timestamp }}.zip $JAR_FILE Procfile
 
       - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v21
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: kiosk-backend
-          environment_name: kiosk-backend-prod-v2
-          region: ${{ env.AWS_REGION }}
-          version_label: edutest-${{ steps.timestamp.outputs.timestamp }}
-          deployment_package: deploy-${{ steps.timestamp.outputs.timestamp }}.zip
-          wait_for_deployment: true
-          wait_for_environment_recovery: 300
+        run: |
+          VERSION_LABEL=edutest-${{ steps.timestamp.outputs.timestamp }}
+          ZIP_FILE=deploy-${{ steps.timestamp.outputs.timestamp }}.zip
+
+          # Upload to S3
+          aws s3 cp $ZIP_FILE s3://elasticbeanstalk-${{ env.AWS_REGION }}-638596943554/kiosk-backend/$ZIP_FILE
+
+          # Create application version
+          aws elasticbeanstalk create-application-version \
+            --application-name kiosk-backend \
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket=elasticbeanstalk-${{ env.AWS_REGION }}-638596943554,S3Key=kiosk-backend/$ZIP_FILE
+
+          # Update environment
+          aws elasticbeanstalk update-environment \
+            --environment-name kiosk-backend-prod-v2 \
+            --version-label $VERSION_LABEL
+
+          echo "Deployment initiated. Version: $VERSION_LABEL"
 
   deploy-frontend:
     name: Deploy Frontend to S3
