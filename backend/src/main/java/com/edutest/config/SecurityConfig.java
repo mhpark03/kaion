@@ -1,7 +1,9 @@
 package com.edutest.config;
 
 import com.edutest.security.JwtAuthenticationFilter;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -31,6 +34,15 @@ public class SecurityConfig {
 
     @Value("${cors.allowed-origins:http://localhost:5174}")
     private String allowedOrigins;
+
+    @PostConstruct
+    public void logCorsConfiguration() {
+        log.info("=================================================");
+        log.info("CORS Configuration Initialized");
+        log.info("Allowed Origins: {}", allowedOrigins);
+        log.info("Allowed Origins (split): {}", Arrays.toString(allowedOrigins.split(",")));
+        log.info("=================================================");
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
