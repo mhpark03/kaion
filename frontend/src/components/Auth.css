@@ -57,6 +57,14 @@
   cursor: not-allowed;
 }
 
+.form-group .helper-text {
+  display: block;
+  margin-top: 5px;
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+}
+
 .btn-primary {
   width: 100%;
   padding: 14px;

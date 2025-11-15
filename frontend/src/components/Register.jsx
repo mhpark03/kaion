@@ -65,6 +65,18 @@ const Register = () => {
     }
   }, [formData.levelId, allGrades]);
 
+  // Reset level, grade, and proficiency when role changes to non-student
+  useEffect(() => {
+    if (formData.role !== 'STUDENT') {
+      setFormData(prev => ({
+        ...prev,
+        levelId: '',
+        gradeId: '',
+        proficiencyLevel: ''
+      }));
+    }
+  }, [formData.role]);
+
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -165,7 +177,7 @@ const Register = () => {
               name="levelId"
               value={formData.levelId}
               onChange={handleChange}
-              disabled={loading}
+              disabled={loading || formData.role !== 'STUDENT'}
             >
               <option value="">선택하세요</option>
               {levels.map(level => (
@@ -174,6 +186,9 @@ const Register = () => {
                 </option>
               ))}
             </select>
+            {formData.role !== 'STUDENT' && (
+              <small className="helper-text">학생만 선택할 수 있습니다</small>
+            )}
           </div>
 
           <div className="form-group">
@@ -183,7 +198,7 @@ const Register = () => {
               name="gradeId"
               value={formData.gradeId}
               onChange={handleChange}
-              disabled={loading || !formData.levelId}
+              disabled={loading || formData.role !== 'STUDENT' || !formData.levelId}
             >
               <option value="">선택하세요</option>
               {grades.map(grade => (
@@ -192,6 +207,9 @@ const Register = () => {
                 </option>
               ))}
             </select>
+            {formData.role !== 'STUDENT' && (
+              <small className="helper-text">학생만 선택할 수 있습니다</small>
+            )}
           </div>
 
           <div className="form-group">
@@ -201,7 +219,7 @@ const Register = () => {
               name="proficiencyLevel"
               value={formData.proficiencyLevel}
               onChange={handleChange}
-              disabled={loading}
+              disabled={loading || formData.role !== 'STUDENT'}
             >
               <option value="">선택하세요</option>
               {DIFFICULTY_LEVELS.map(level => (
@@ -210,6 +228,9 @@ const Register = () => {
                 </option>
               ))}
             </select>
+            {formData.role !== 'STUDENT' && (
+              <small className="helper-text">학생만 선택할 수 있습니다</small>
+            )}
           </div>
 
           <div className="form-group">
