@@ -23,18 +23,6 @@
   text-align: center;
 }
 
-.management-header-simple {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.management-header-simple h1 {
-  margin: 0;
-  color: white;
-  font-size: 32px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
 .btn-back {
   padding: 10px 20px;
   background: #6c757d;
@@ -274,28 +262,36 @@
 }
 
 /* Question Management Specific */
+.filters-container {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
 .filters-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 15px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   align-items: center;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  flex-wrap: wrap;
 }
 
 .filters-row select,
 .filters-row input {
-  padding: 8px 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 13px;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
   background: white;
   box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.filters-row select:focus,
+.filters-row input:focus {
+  outline: none;
+  border-color: #667eea;
 }
 
 .filters-row select {
@@ -304,66 +300,32 @@
 
 /* Match table column widths - proportional to table */
 .filter-level {
-  width: 8%;
-  min-width: 80px;
-  flex-shrink: 0;
+  flex: 0 0 100px;
 }
 
 .filter-concept {
-  width: 12%;
-  min-width: 100px;
-  flex-shrink: 0;
+  flex: 0 0 120px;
 }
 
 .filter-type {
-  width: 8%;
-  min-width: 80px;
-  flex-shrink: 0;
+  flex: 0 0 100px;
 }
 
 .filter-difficulty {
-  width: 10%;
-  min-width: 90px;
-  flex-shrink: 0;
+  flex: 0 0 120px;
 }
 
 .filter-question {
-  width: 30%;
+  flex: 1 1 200px;
   min-width: 150px;
-  max-width: 300px;
-  flex-shrink: 1;
 }
 
 .filter-attempt {
-  width: 10%;
-  min-width: 90px;
-  flex-shrink: 0;
+  flex: 0 0 110px;
 }
 
 .filter-rate {
-  width: 10%;
-  min-width: 90px;
-  flex-shrink: 0;
-}
-
-.btn-create-inline {
-  padding: 8px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  transition: all 0.2s;
-  white-space: nowrap;
-  margin-left: 10px;
-  flex-shrink: 0;
-}
-
-.btn-create-inline:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  flex: 0 0 110px;
 }
 
 .questions-list {
@@ -510,10 +472,9 @@
   }
 
   .filters-row select,
-  .filters-row input,
-  .btn-create-inline {
-    width: 100% !important;
-    margin-left: 0;
+  .filters-row input {
+    flex: 1 1 100%;
+    width: 100%;
   }
 }
 

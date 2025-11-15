@@ -261,11 +261,15 @@ const QuestionManagement = () => {
       <Navbar />
 
       <div className="management-content">
-        <div className="management-header-simple">
+        <div className="management-header">
           <h1>문제 관리</h1>
+          <button onClick={() => navigate('/question-create')} className="btn-create">
+            + 새 문제
+          </button>
         </div>
 
-        <div className="filters-row">
+        <div className="filters-container">
+          <div className="filters-row">
           <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)} className="filter-level">
             <option value="">전체 학년</option>
             {levels.map((l) => (
@@ -315,10 +319,7 @@ const QuestionManagement = () => {
             <option value="high">90% 이상</option>
             <option value="low">40% 이하</option>
           </select>
-
-          <button onClick={() => navigate('/question-create')} className="btn-create-inline">
-            + 새 문제
-          </button>
+        </div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
