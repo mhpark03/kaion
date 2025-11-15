@@ -48,6 +48,9 @@ public class User {
     @JoinColumn(name = "grade_id")
     private Grade grade;
 
+    @Column(name = "proficiency_level", length = 20)
+    private String proficiencyLevel;  // VERY_EASY, EASY, MEDIUM, HARD, VERY_HARD
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { levelService } from '../services/levelService';
 import { gradeService } from '../services/gradeService';
+import { DIFFICULTY_LEVELS } from '../constants/difficulty';
 import './Auth.css';
 
 const Register = () => {
@@ -13,7 +14,8 @@ const Register = () => {
     email: '',
     role: 'STUDENT',
     levelId: '',
-    gradeId: ''
+    gradeId: '',
+    proficiencyLevel: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -187,6 +189,24 @@ const Register = () => {
               {grades.map(grade => (
                 <option key={grade.id} value={grade.id}>
                   {grade.displayName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="proficiencyLevel">학습 수준</label>
+            <select
+              id="proficiencyLevel"
+              name="proficiencyLevel"
+              value={formData.proficiencyLevel}
+              onChange={handleChange}
+              disabled={loading}
+            >
+              <option value="">선택하세요</option>
+              {DIFFICULTY_LEVELS.map(level => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
                 </option>
               ))}
             </select>

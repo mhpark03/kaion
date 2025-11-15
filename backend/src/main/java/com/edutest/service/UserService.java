@@ -66,6 +66,7 @@ public class UserService {
                 .role(request.getRole() != null ? request.getRole() : "STUDENT")
                 .level(level)
                 .grade(grade)
+                .proficiencyLevel(request.getProficiencyLevel())
                 .active(true)
                 .build();
 
