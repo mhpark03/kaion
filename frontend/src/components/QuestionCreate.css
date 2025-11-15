@@ -576,6 +576,13 @@
   background: #f0f8ff;
 }
 
+.preview-content.empty {
+  color: #6c757d;
+  font-style: italic;
+  text-align: center;
+  border-left-color: #dee2e6;
+}
+
 .preview-image {
   padding: 16px;
   background: #f8f9fa;

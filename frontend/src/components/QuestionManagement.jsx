@@ -18,12 +18,16 @@ const QuestionManagement = () => {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [formData, setFormData] = useState({
     levelId: '',
     questionText: '',
     questionType: 'MULTIPLE_CHOICE',
     correctAnswer: '',
-    points: 10,
+    difficulty: 'MEDIUM',
     options: [],
     conceptId: '',
     explanation: ''
@@ -47,6 +51,7 @@ const QuestionManagement = () => {
 
   useEffect(() => {
     loadQuestions();
+    setCurrentPage(1); // Reset to first page when filter changes
   }, [filterLevel]);
 
   const loadData = async () => {
@@ -77,10 +82,37 @@ const QuestionManagement = () => {
     setError('');
 
     try {
+      // Convert conceptId to conceptIds array for backend
+      const conceptIds = formData.conceptId && !isNaN(parseInt(formData.conceptId))
+        ? [parseInt(formData.conceptId)]
+        : [];
+
+      const requestData = {
+        levelId: formData.levelId,
+        subUnitId: editingQuestion?.subUnitId,
+        difficulty: formData.difficulty,
+        evalDomain: editingQuestion?.evalDomain || '이해/개념',
+        questionText: formData.questionText,
+        questionType: formData.questionType,
+        correctAnswer: formData.correctAnswer,
+        points: editingQuestion?.points || 10,
+        options: formData.options,
+        conceptIds: conceptIds
+      };
+
       if (editingQuestion) {
-        await questionService.update(editingQuestion.id, formData);
+        // Use FormData for multipart/form-data upload
+        const formDataToSend = new FormData();
+        formDataToSend.append('request', new Blob([JSON.stringify(requestData)], { type: 'application/json' }));
+
+        // Include image if exists
+        if (imageFile) {
+          formDataToSend.append('image', imageFile);
+        }
+
+        await questionService.updateWithImage(editingQuestion.id, formDataToSend);
       } else {
-        await questionService.create(formData);
+        await questionService.create(requestData);
       }
       setShowModal(false);
       resetForm();
@@ -92,13 +124,20 @@ const QuestionManagement = () => {
 
   const handleEdit = (question) => {
     setEditingQuestion(question);
+
+    // Extract conceptId from concepts array (use first concept if multiple)
+    const conceptId = question.concepts && question.concepts.length > 0
+      ? question.concepts[0].id.toString()
+      : '';
+
     setFormData({
       levelId: question.levelId,
       questionText: question.questionText,
       questionType: question.questionType,
       correctAnswer: question.correctAnswer,
-      points: question.points,
+      difficulty: question.difficulty || 'MEDIUM',
       options: question.options || [],
+      conceptId: conceptId,
       explanation: question.explanation || ''
     });
     // Load existing image if available
@@ -150,7 +189,7 @@ const QuestionManagement = () => {
       questionText: '',
       questionType: 'MULTIPLE_CHOICE',
       correctAnswer: '',
-      points: 10,
+      difficulty: 'MEDIUM',
       options: [],
       conceptId: '',
       explanation: ''
@@ -208,33 +247,119 @@ const QuestionManagement = () => {
 
         {error && <div className="error-message">{error}</div>}
 
-        <div className="questions-list">
-          {questions.map((question) => (
-            <div key={question.id} className="question-card">
-              <div className="question-header">
-                <span className="badge">{question.levelName}</span>
-                <span className="badge">{getQuestionTypeLabel(question.questionType)}</span>
-                <span className="points">{question.points}점</span>
-              </div>
-              <p className="question-text">{question.questionText}</p>
-              {question.options && question.options.length > 0 && (
-                <ul className="options-list">
-                  {question.options.map((opt, idx) => (
-                    <li key={opt.id}>{idx + 1}. {opt.optionText}</li>
-                  ))}
-                </ul>
-              )}
-              <p className="correct-answer">정답: {question.correctAnswer}</p>
-              <div className="item-actions">
-                <button onClick={() => handleEdit(question)} className="btn-edit">
-                  수정
+        <div className="questions-table-container">
+          <table className="questions-table">
+            <thead>
+              <tr>
+                <th>학년</th>
+                <th>핵심개념</th>
+                <th>유형</th>
+                <th>난이도</th>
+                <th>문제</th>
+                <th>시도</th>
+                <th>정답률</th>
+                <th>동작</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(() => {
+                const indexOfLastItem = currentPage * itemsPerPage;
+                const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+                const currentItems = questions.slice(indexOfFirstItem, indexOfLastItem);
+
+                const getDifficultyLabel = (difficulty) => {
+                  const difficultyMap = {
+                    'VERY_EASY': '매우 쉬움',
+                    'EASY': '쉬움',
+                    'MEDIUM': '보통',
+                    'HARD': '어려움',
+                    'VERY_HARD': '매우 어려움'
+                  };
+                  return difficultyMap[difficulty] || '보통';
+                };
+
+                return currentItems.map((question) => (
+                  <tr key={question.id}>
+                    <td className="level-cell">
+                      <span className="badge level-badge">{question.levelName}</span>
+                    </td>
+                    <td className="concept-cell">
+                      <div className="concept-info">
+                        {question.concepts && question.concepts.length > 0 ? (
+                          question.concepts.map((concept, idx) => (
+                            <span key={concept.id} className="concept-tag">
+                              {concept.displayName || concept.name}
+                              {idx < question.concepts.length - 1 && ', '}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="no-concept">-</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="type-cell">
+                      <span className="badge type-badge">{getQuestionTypeLabel(question.questionType)}</span>
+                    </td>
+                    <td className="difficulty-cell">
+                      <span className="difficulty-badge">{getDifficultyLabel(question.difficulty)}</span>
+                    </td>
+                    <td className="question-cell">
+                      <div className="question-preview" title={question.questionText}>
+                        {question.questionText}
+                      </div>
+                    </td>
+                    <td className="attempt-cell">
+                      <span className="attempt-count">{question.attemptCount || 0}명</span>
+                    </td>
+                    <td className="rate-cell">
+                      <span className="correct-rate">
+                        {question.correctRate != null ? question.correctRate.toFixed(1) : '0.0'}%
+                      </span>
+                    </td>
+                    <td className="actions-cell">
+                      <button onClick={() => handleEdit(question)} className="btn-table-edit">
+                        수정
+                      </button>
+                      <button onClick={() => handleDelete(question.id)} className="btn-table-delete">
+                        삭제
+                      </button>
+                    </td>
+                  </tr>
+                ));
+              })()}
+            </tbody>
+          </table>
+
+          {/* Pagination */}
+          {questions.length > itemsPerPage && (
+            <div className="pagination">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="pagination-btn"
+              >
+                이전
+              </button>
+
+              {Array.from({ length: Math.ceil(questions.length / itemsPerPage) }, (_, i) => i + 1).map(pageNum => (
+                <button
+                  key={pageNum}
+                  onClick={() => setCurrentPage(pageNum)}
+                  className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
+                >
+                  {pageNum}
                 </button>
-                <button onClick={() => handleDelete(question.id)} className="btn-delete">
-                  삭제
-                </button>
-              </div>
+              ))}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(questions.length / itemsPerPage)))}
+                disabled={currentPage === Math.ceil(questions.length / itemsPerPage)}
+                className="pagination-btn"
+              >
+                다음
+              </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -344,6 +469,29 @@ const QuestionManagement = () => {
                   </div>
                 </div>
 
+                {/* 통계 섹션 - 수정 모달에서만 전체 통계 표시 */}
+                {editingQuestion && (
+                  <div className="preview-section">
+                    <h3>📊 통계</h3>
+                    <div className="modal-stats">
+                      <div className="modal-stat-item">
+                        <span className="modal-stat-label">시도한 학생 수</span>
+                        <span className="modal-stat-value">{editingQuestion.attemptCount || 0}명</span>
+                      </div>
+                      <div className="modal-stat-item">
+                        <span className="modal-stat-label">정답자 수</span>
+                        <span className="modal-stat-value">{editingQuestion.correctCount || 0}명</span>
+                      </div>
+                      <div className="modal-stat-item">
+                        <span className="modal-stat-label">정답률</span>
+                        <span className="modal-stat-value modal-stat-rate">
+                          {editingQuestion.correctRate != null ? editingQuestion.correctRate.toFixed(1) : '0.0'}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* 설정 섹션 */}
                 <div className="preview-section">
                   <h3>⚙️ 설정</h3>
@@ -351,14 +499,15 @@ const QuestionManagement = () => {
                     <div className="form-group">
                       <label>난이도</label>
                       <select
-                        value={formData.levelId}
-                        onChange={(e) => setFormData({ ...formData, levelId: e.target.value })}
+                        value={formData.difficulty || 'MEDIUM'}
+                        onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
                         required
                       >
-                        <option value="">선택하세요</option>
-                        {levels.map((l) => (
-                          <option key={l.id} value={l.id}>{l.name}</option>
-                        ))}
+                        <option value="VERY_EASY">매우 쉬움</option>
+                        <option value="EASY">쉬움</option>
+                        <option value="MEDIUM">보통</option>
+                        <option value="HARD">어려움</option>
+                        <option value="VERY_HARD">매우 어려움</option>
                       </select>
                     </div>
                     <div className="form-group">
@@ -370,16 +519,6 @@ const QuestionManagement = () => {
                         <option value="MULTIPLE_CHOICE">객관식</option>
                         <option value="TRUE_FALSE">O/X</option>
                       </select>
-                    </div>
-                    <div className="form-group">
-                      <label>배점</label>
-                      <input
-                        type="number"
-                        value={formData.points}
-                        onChange={(e) => setFormData({ ...formData, points: parseInt(e.target.value) })}
-                        required
-                        min="1"
-                      />
                     </div>
                   </div>
                 </div>

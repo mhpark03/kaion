@@ -41,10 +41,6 @@ public class Concept {
     @Builder.Default
     private Integer orderIndex = 0;
 
-    @ManyToMany(mappedBy = "concepts")
-    @Builder.Default
-    private Set<Question> questions = new HashSet<>();
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

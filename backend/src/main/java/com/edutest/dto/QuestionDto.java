@@ -27,4 +27,9 @@ public class QuestionDto {
     private String referenceDocument; // 참조 문서 파일 경로
     private List<QuestionOptionDto> options;
     private List<ConceptDto> concepts;
+
+    // Statistics fields
+    private Integer attemptCount; // 시도한 학생 수
+    private Integer correctCount; // 정답자 수
+    private Double correctRate; // 정답 비율 (0.0 ~ 100.0)
 }

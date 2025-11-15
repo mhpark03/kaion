@@ -117,6 +117,7 @@ public class LevelService {
         return LevelDto.builder()
                 .id(level.getId())
                 .name(level.getName())
+                .displayName(level.getDisplayName() != null ? level.getDisplayName() : level.getName())
                 .description(level.getDescription())
                 .difficultyRank(level.getOrderIndex())
                 .build();

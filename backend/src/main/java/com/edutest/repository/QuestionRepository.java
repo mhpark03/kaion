@@ -16,5 +16,11 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     @Query("SELECT q FROM Question q LEFT JOIN FETCH q.options WHERE q.id = :id")
     Question findByIdWithOptions(@Param("id") Long id);
 
+    @Query("SELECT q FROM Question q LEFT JOIN FETCH q.concept LEFT JOIN FETCH q.level")
+    List<Question> findAllWithConcepts();
+
+    @Query("SELECT q FROM Question q LEFT JOIN FETCH q.concept LEFT JOIN FETCH q.level WHERE q.level.id = :levelId")
+    List<Question> findByLevelIdWithConcepts(@Param("levelId") Long levelId);
+
     Long countByLevelId(Long levelId);
 }

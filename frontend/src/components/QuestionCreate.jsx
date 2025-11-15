@@ -77,14 +77,18 @@ const QuestionCreate = () => {
         subUnitService.getAll(),
         conceptService.getAll()
       ]);
-      setLevels(levelsRes.data);
-      setGrades(gradesRes.data);
-      setUnits(unitsRes.data);
-      setSubUnits(subUnitsRes.data);
-      setConcepts(conceptsRes.data);
+
+      console.log('Levels response:', levelsRes);
+      console.log('Levels data:', levelsRes.data);
+
+      setLevels(levelsRes.data || []);
+      setGrades(gradesRes.data || []);
+      setUnits(unitsRes.data || []);
+      setSubUnits(subUnitsRes.data || []);
+      setConcepts(conceptsRes.data || []);
     } catch (error) {
       setError('데이터를 불러오는데 실패했습니다');
-      console.error(error);
+      console.error('Error loading hierarchy data:', error);
     } finally {
       setLoading(false);
     }
@@ -543,15 +547,19 @@ const QuestionCreate = () => {
             </div>
 
             <div className="modal-body">
-              {/* 그림 섹션 */}
-              {(aiPreview.generatedImagePreview || imagePreview) && (
-                <div className="preview-section">
-                  <h3>📷 그림</h3>
+              {/* 그림 섹션 - 항상 표시 */}
+              <div className="preview-section">
+                <h3>📷 그림</h3>
+                {(aiPreview.generatedImagePreview || imagePreview) ? (
                   <div className="preview-image">
                     <img src={aiPreview.generatedImagePreview || imagePreview} alt="문제 이미지" />
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="preview-content empty">
+                    이미지 없음
+                  </div>
+                )}
+              </div>
 
               {/* 문제 섹션 */}
               <div className="preview-section">

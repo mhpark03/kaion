@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,17 +26,18 @@ public class QuestionService {
     private final SubjectRepository subjectRepository;
     private final SubUnitRepository subUnitRepository;
     private final ConceptRepository conceptRepository;
+    private final UserAnswerRepository userAnswerRepository;
 
     @Transactional(readOnly = true)
     public List<QuestionDto> getAllQuestions() {
-        return questionRepository.findAll().stream()
+        return questionRepository.findAllWithConcepts().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<QuestionDto> getQuestionsByLevel(Long levelId) {
-        return questionRepository.findByLevelId(levelId).stream()
+        return questionRepository.findByLevelIdWithConcepts(levelId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -77,13 +79,12 @@ public class QuestionService {
             throw new IllegalArgumentException("Cannot determine subject for question. Please provide valid subUnitId or conceptId.");
         }
 
-        // Load concepts
-        Set<Concept> concepts = new HashSet<>();
+        // Load concept (single concept instead of multiple)
+        Concept concept = null;
         if (request.getConceptIds() != null && !request.getConceptIds().isEmpty()) {
-            concepts = request.getConceptIds().stream()
-                    .map(id -> conceptRepository.findById(id)
-                            .orElseThrow(() -> new IllegalArgumentException("Concept not found with id: " + id)))
-                    .collect(Collectors.toSet());
+            Long conceptId = request.getConceptIds().get(0); // Use first concept ID
+            concept = conceptRepository.findById(conceptId)
+                    .orElseThrow(() -> new IllegalArgumentException("Concept not found with id: " + conceptId));
         }
 
         Question question = Question.builder()
@@ -99,7 +100,7 @@ public class QuestionService {
                 .referenceImage(request.getReferenceImage())
                 .referenceDocument(request.getReferenceDocument())
                 .correctAnswer(request.getCorrectAnswer())
-                .concepts(concepts)
+                .concept(concept)
                 .build();
 
         Question savedQuestion = questionRepository.save(question);
@@ -119,7 +120,14 @@ public class QuestionService {
             }
         }
 
-        return convertToDto(questionRepository.findById(savedQuestion.getId()).get());
+        // Reload question with concepts using FETCH JOIN
+        final Long questionId = savedQuestion.getId();
+        List<Question> questions = questionRepository.findByLevelIdWithConcepts(savedQuestion.getLevel().getId());
+        savedQuestion = questions.stream()
+                .filter(q -> q.getId().equals(questionId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Question not found after save"));
+        return convertToDto(savedQuestion);
     }
 
     @Transactional
@@ -155,13 +163,12 @@ public class QuestionService {
             throw new IllegalArgumentException("Cannot determine subject for question. Please provide valid subUnitId or conceptId.");
         }
 
-        // Load concepts
-        Set<Concept> concepts = new HashSet<>();
+        // Load concept (single concept instead of multiple)
+        Concept concept = null;
         if (request.getConceptIds() != null && !request.getConceptIds().isEmpty()) {
-            concepts = request.getConceptIds().stream()
-                    .map(cId -> conceptRepository.findById(cId)
-                            .orElseThrow(() -> new IllegalArgumentException("Concept not found with id: " + cId)))
-                    .collect(Collectors.toSet());
+            Long conceptId = request.getConceptIds().get(0); // Use first concept ID
+            concept = conceptRepository.findById(conceptId)
+                    .orElseThrow(() -> new IllegalArgumentException("Concept not found with id: " + conceptId));
         }
 
         question.setLevel(level);
@@ -176,10 +183,7 @@ public class QuestionService {
         question.setReferenceImage(request.getReferenceImage());
         question.setReferenceDocument(request.getReferenceDocument());
         question.setCorrectAnswer(request.getCorrectAnswer());
-
-        // Clear and update concepts
-        question.getConcepts().clear();
-        question.getConcepts().addAll(concepts);
+        question.setConcept(concept);
 
         Question updatedQuestion = questionRepository.save(question);
 
@@ -200,7 +204,13 @@ public class QuestionService {
             }
         }
 
-        return convertToDto(questionRepository.findById(id).get());
+        // Reload question with concepts using FETCH JOIN
+        List<Question> questions = questionRepository.findByLevelIdWithConcepts(updatedQuestion.getLevel().getId());
+        updatedQuestion = questions.stream()
+                .filter(q -> q.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Question not found after update"));
+        return convertToDto(updatedQuestion);
     }
 
     @Transactional
@@ -239,15 +249,21 @@ public class QuestionService {
             correctAnswer = question.getCorrectAnswer() != null ? question.getCorrectAnswer() : "";
         }
 
-        // Convert concepts to DTOs
-        List<ConceptDto> conceptDtos = question.getConcepts().stream()
-                .map(concept -> ConceptDto.builder()
-                        .id(concept.getId())
-                        .name(concept.getName())
-                        .displayName(concept.getDisplayName())
-                        .description(concept.getDescription())
-                        .build())
-                .collect(Collectors.toList());
+        // Convert concept to DTO (single concept)
+        List<ConceptDto> conceptDtos = new ArrayList<>();
+        if (question.getConcept() != null) {
+            conceptDtos.add(ConceptDto.builder()
+                    .id(question.getConcept().getId())
+                    .name(question.getConcept().getName())
+                    .displayName(question.getConcept().getDisplayName())
+                    .description(question.getConcept().getDescription())
+                    .build());
+        }
+
+        // Calculate statistics
+        Long attemptCount = userAnswerRepository.countDistinctUsersByQuestionId(question.getId());
+        Long correctCount = userAnswerRepository.countCorrectUsersByQuestionId(question.getId());
+        Double correctRate = attemptCount > 0 ? (correctCount * 100.0 / attemptCount) : 0.0;
 
         return QuestionDto.builder()
                 .id(question.getId())
@@ -265,6 +281,9 @@ public class QuestionService {
                 .referenceDocument(question.getReferenceDocument())
                 .options(options)
                 .concepts(conceptDtos)
+                .attemptCount(attemptCount.intValue())
+                .correctCount(correctCount.intValue())
+                .correctRate(correctRate)
                 .build();
     }
 }

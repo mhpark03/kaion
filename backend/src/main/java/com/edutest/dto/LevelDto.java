@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class LevelDto {
     private Long id;
     private String name;
+    private String displayName;
     private String description;
     private Integer difficultyRank;
 }

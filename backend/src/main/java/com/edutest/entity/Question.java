@@ -77,14 +77,9 @@ public class Question {
     @Builder.Default
     private List<QuestionOption> options = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-        name = "question_concepts",
-        joinColumns = @JoinColumn(name = "question_id"),
-        inverseJoinColumns = @JoinColumn(name = "concept_id")
-    )
-    @Builder.Default
-    private Set<Concept> concepts = new HashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "concept_id")
+    private Concept concept;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
