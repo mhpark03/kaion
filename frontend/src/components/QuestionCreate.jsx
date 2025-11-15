@@ -237,22 +237,6 @@ const QuestionCreate = () => {
     setShowPreview(false);
   };
 
-  const handleEditAndSave = () => {
-    // Fill form with AI data and close preview
-    setFormData(prev => ({
-      ...prev,
-      questionText: aiPreview.questionText,
-      correctAnswer: aiPreview.correctAnswer
-    }));
-
-    if (aiPreview.generatedImageFile && !imageFile) {
-      setImageFile(aiPreview.generatedImageFile);
-      setImagePreview(aiPreview.generatedImagePreview);
-    }
-
-    setShowPreview(false);
-  };
-
   // Filter data based on selections
   const filteredGrades = selectedLevel
     ? grades.filter(g => g.levelId === parseInt(selectedLevel))
@@ -578,25 +562,18 @@ const QuestionCreate = () => {
               </div>
 
               {/* 보기 섹션 */}
-              {(formData.questionType === 'MULTIPLE_CHOICE' || formData.questionType === 'TRUE_FALSE') && (
+              {(formData.questionType === 'MULTIPLE_CHOICE' || formData.questionType === 'TRUE_FALSE') &&
+               aiPreview.options && aiPreview.options.length > 0 && (
                 <div className="preview-section">
                   <h3>📋 보기</h3>
                   <div className="preview-options">
-                    {aiPreview.options && aiPreview.options.length > 0 ? (
-                      <ol className="options-list">
-                        {aiPreview.options.map((option, idx) => (
-                          <li key={idx} className="option-item">
-                            {option}
-                          </li>
-                        ))}
-                      </ol>
-                    ) : (
-                      <div className="option-placeholder">
-                        {formData.questionType === 'MULTIPLE_CHOICE'
-                          ? '※ 객관식 보기는 "수정 후 저장"을 선택하여 추가할 수 있습니다.'
-                          : '※ O/X 보기는 자동으로 생성됩니다.'}
-                      </div>
-                    )}
+                    <ol className="options-list">
+                      {aiPreview.options.map((option, idx) => (
+                        <li key={idx} className="option-item">
+                          {option}
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                 </div>
               )}
@@ -621,11 +598,11 @@ const QuestionCreate = () => {
             </div>
 
             <div className="modal-actions">
-              <button className="btn-secondary" onClick={handleEditAndSave}>
-                수정 후 저장
+              <button className="btn-secondary" onClick={handleClosePreview}>
+                취소
               </button>
               <button className="btn-primary" onClick={handleSaveQuestion} disabled={loading}>
-                {loading ? '저장 중...' : '바로 저장'}
+                {loading ? '저장 중...' : '저장'}
               </button>
             </div>
           </div>
