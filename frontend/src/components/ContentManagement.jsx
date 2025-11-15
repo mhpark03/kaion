@@ -20,6 +20,11 @@ const ContentManagement = () => {
   const [subUnits, setSubUnits] = useState([]);
   const [concepts, setConcepts] = useState([]);
 
+  // Filter states
+  const [filterLevelId, setFilterLevelId] = useState('');
+  const [filterGradeId, setFilterGradeId] = useState('');
+  const [searchText, setSearchText] = useState('');
+
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [showListModal, setShowListModal] = useState(false);
@@ -323,7 +328,7 @@ const ContentManagement = () => {
   };
 
   const getEnrichedConcepts = () => {
-    return concepts.map(concept => {
+    let enrichedConcepts = concepts.map(concept => {
       const subUnit = subUnits.find(su => su.id === concept.subUnitId);
       const unit = subUnit ? units.find(u => u.id === subUnit.unitId) : null;
       const grade = unit ? grades.find(g => g.id === unit.gradeId) : null;
@@ -333,10 +338,33 @@ const ContentManagement = () => {
         unitDisplayName: unit ? getUnitName(unit.id) : '-',
         gradeDisplayName: unit ? getGradeName(unit.gradeId) : '-',
         levelDisplayName: grade ? getLevelName(grade.levelId) : '-',
+        gradeId: unit ? unit.gradeId : null,
+        levelId: grade ? grade.levelId : null,
+        unitName: unit ? unit.name : '',
+        subUnitName: subUnit ? subUnit.name : '',
         questionCount: concept.questionCount || 0,
         questionCountByDifficulty: `${concept.veryEasyCount || 0}/${concept.easyCount || 0}/${concept.mediumCount || 0}/${concept.hardCount || 0}/${concept.veryHardCount || 0}`
       };
     });
+
+    // Apply filters
+    if (filterLevelId) {
+      enrichedConcepts = enrichedConcepts.filter(concept => concept.levelId === parseInt(filterLevelId));
+    }
+    if (filterGradeId) {
+      enrichedConcepts = enrichedConcepts.filter(concept => concept.gradeId === parseInt(filterGradeId));
+    }
+    if (searchText) {
+      const searchLower = searchText.toLowerCase();
+      enrichedConcepts = enrichedConcepts.filter(concept =>
+        (concept.unitName && concept.unitName.toLowerCase().includes(searchLower)) ||
+        (concept.subUnitName && concept.subUnitName.toLowerCase().includes(searchLower)) ||
+        (concept.name && concept.name.toLowerCase().includes(searchLower)) ||
+        (concept.displayName && concept.displayName.toLowerCase().includes(searchLower))
+      );
+    }
+
+    return enrichedConcepts;
   };
 
   const renderTable = (title, items, type) => {
@@ -548,6 +576,56 @@ const ContentManagement = () => {
         </div>
 
         {error && <div className="error-message">{error}</div>}
+
+        {/* Filters */}
+        <div className="content-filters">
+          <select
+            value={filterLevelId}
+            onChange={(e) => setFilterLevelId(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">전체 교육과정</option>
+            {levels.map(level => (
+              <option key={level.id} value={level.id}>
+                {level.displayName || level.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filterGradeId}
+            onChange={(e) => setFilterGradeId(e.target.value)}
+            className="filter-select"
+          >
+            <option value="">전체 학년</option>
+            {grades
+              .filter(grade => !filterLevelId || grade.levelId === parseInt(filterLevelId))
+              .map(grade => (
+                <option key={grade.id} value={grade.id}>
+                  {grade.displayName || grade.name}
+                </option>
+              ))}
+          </select>
+
+          <input
+            type="text"
+            placeholder="대단원/소단원/핵심개념 검색..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="filter-search"
+          />
+
+          <button
+            onClick={() => {
+              setFilterLevelId('');
+              setFilterGradeId('');
+              setSearchText('');
+            }}
+            className="filter-reset"
+          >
+            초기화
+          </button>
+        </div>
 
         {loading ? (
           <div className="loading">로딩 중...</div>
