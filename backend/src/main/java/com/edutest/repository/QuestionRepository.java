@@ -23,4 +23,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     List<Question> findByLevelIdWithConcepts(@Param("levelId") Long levelId);
 
     Long countByLevelId(Long levelId);
+
+    Long countByConceptId(Long conceptId);
 }

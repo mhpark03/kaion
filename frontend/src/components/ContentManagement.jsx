@@ -333,7 +333,7 @@ const ContentManagement = () => {
         unitDisplayName: unit ? getUnitName(unit.id) : '-',
         gradeDisplayName: unit ? getGradeName(unit.gradeId) : '-',
         levelDisplayName: grade ? getLevelName(grade.levelId) : '-',
-        questionCount: 0 // TODO: 실제 문제 개수를 가져오도록 구현
+        questionCount: concept.questionCount || 0
       };
     });
   };

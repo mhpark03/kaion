@@ -17,4 +17,5 @@ public class ConceptDto {
     private String displayName;
     private String description;
     private Integer orderIndex;
+    private Long questionCount;
 }

@@ -4,6 +4,7 @@ import com.edutest.dto.ConceptDto;
 import com.edutest.entity.Concept;
 import com.edutest.entity.SubUnit;
 import com.edutest.repository.ConceptRepository;
+import com.edutest.repository.QuestionRepository;
 import com.edutest.repository.SubUnitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class ConceptService {
 
     private final ConceptRepository conceptRepository;
     private final SubUnitRepository subUnitRepository;
+    private final QuestionRepository questionRepository;
 
     @Transactional(readOnly = true)
     public List<ConceptDto> getAllConcepts() {
@@ -136,6 +138,8 @@ public class ConceptService {
     }
 
     private ConceptDto convertToDto(Concept concept) {
+        Long questionCount = questionRepository.countByConceptId(concept.getId());
+
         return ConceptDto.builder()
                 .id(concept.getId())
                 .subUnitId(concept.getSubUnit() != null ? concept.getSubUnit().getId() : null)
@@ -144,6 +148,7 @@ public class ConceptService {
                 .displayName(concept.getDisplayName())
                 .description(concept.getDescription())
                 .orderIndex(concept.getOrderIndex())
+                .questionCount(questionCount)
                 .build();
     }
 }
