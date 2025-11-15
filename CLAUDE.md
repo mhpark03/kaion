@@ -54,9 +54,14 @@ Level (교육 과정)
 - **Unit**: Major chapter/unit (e.g., "역학적 시스템" - Mechanical Systems)
 - **SubUnit**: Sub-chapter (e.g., "뉴턴 법칙과 힘" - Newton's Laws and Forces)
 - **Concept**: Core learning objective (e.g., "작용-반작용" - Action-Reaction)
-- **Question**: Links to concepts via many-to-many relationship
+- **Question**: Links to concepts via **ManyToOne** relationship
 
-**Important:** Questions are associated with Concepts (not SubUnits directly). A question can test multiple concepts.
+**CRITICAL:**
+- Questions have a **ManyToOne** relationship with Concept (NOT ManyToMany)
+- Each question belongs to exactly ONE concept
+- Questions also directly reference Level and Subject for easier querying
+- To get grade information from a question: Question → SubUnit → Unit → Grade
+- Frontend displays gradeName (학년) in QuestionManagement, NOT levelName (교육과정)
 
 ### Entity Package Structure
 
@@ -64,6 +69,33 @@ Entities use **LAZY fetching** for all relationships to avoid N+1 queries. When 
 - Always use `@EntityGraph` or explicit JOIN FETCH for related entities
 - Never access lazy relationships in DTOs without initialization
 - Controllers return DTOs, not entities directly
+
+### Frontend Architecture
+
+**Technology Stack:**
+- React 18.3.1 with functional components and hooks
+- React Router DOM 6 for routing
+- Axios for HTTP requests with interceptors
+- Context API for global state (AuthContext)
+- CSS Modules for component styling
+
+**Key Pages:**
+- `ContentManagement.jsx`: Hierarchical content browser with Level/Grade/Unit/SubUnit/Concept management
+- `QuestionManagement.jsx`: Question list with filtering, pagination, and CRUD operations
+- `QuestionCreate.jsx`: AI-powered question generation interface
+- `Dashboard.jsx`: Main landing page after login
+
+**State Management Pattern:**
+- Use `useMemo` for expensive filtering operations to avoid re-computation on every render
+- Client-side filtering and pagination (filter then paginate, NOT paginate then filter)
+- `useState` for local component state, `useContext` for global auth state
+- Service layer pattern: All API calls go through service files (`questionService.js`, `gradeService.js`, etc.)
+
+**Filtering & Pagination:**
+- ContentManagement: 10 items per page, filters by level/grade/text search
+- QuestionManagement: 10 items per page, filters by grade/concept/type/difficulty/correctRate/attemptCount
+- Always reset to page 1 when filters change (via `useEffect` watching filter state)
+- Pagination UI shows: [이전] [1] [2] [3] ... [다음]
 
 ### JWT Authentication Flow
 
@@ -166,10 +198,59 @@ curl -X POST http://localhost:8081/api/secrets/openai-api-key \
 - `GET /api/concepts` - List concepts (optionally filter by subUnitId)
 
 ### Questions
+- `GET /api/questions` - List all questions with concepts
+- `GET /api/questions?levelId={id}` - Filter questions by level
+- `GET /api/questions/{id}` - Get single question with options
 - `POST /api/questions` - Create question (TEACHER, ADMIN)
+- `PUT /api/questions/{id}` - Update question (TEACHER, ADMIN)
+- `DELETE /api/questions/{id}` - Delete question (TEACHER, ADMIN)
 - `POST /api/questions/generate-ai` - AI generate question (TEACHER, ADMIN)
   - Requires: conceptId, difficulty, questionType
   - Optional: userPrompt, referenceImage, referenceDocument, generateImage
+
+**QuestionDto Structure:**
+```java
+{
+  "id": 1,
+  "levelId": 1,
+  "levelName": "HIGH_SCHOOL",
+  "gradeId": 1,           // Added: Grade reference
+  "gradeName": "H1",      // Added: Grade display
+  "subUnitId": 1,
+  "subUnitName": "뉴턴 법칙과 힘",
+  "difficulty": "VERY_EASY|EASY|MEDIUM|HARD|VERY_HARD",
+  "questionType": "MULTIPLE_CHOICE|TRUE_FALSE|SHORT_ANSWER|ESSAY",
+  "questionText": "...",
+  "correctAnswer": "...",
+  "options": [...],
+  "concepts": [{...}],
+  "attemptCount": 50,     // Student statistics
+  "correctCount": 45,
+  "correctRate": 90.0
+}
+```
+
+**ConceptDto with Question Counts:**
+```java
+{
+  "id": 1,
+  "name": "action_reaction",
+  "displayName": "작용-반작용",
+  "questionCount": 10,
+  "veryEasyCount": 2,     // Count by difficulty
+  "easyCount": 3,
+  "mediumCount": 3,
+  "hardCount": 1,
+  "veryHardCount": 1
+}
+```
+
+**Difficulty Levels (5-tier system):**
+- `VERY_EASY` (매우 쉬움)
+- `EASY` (쉬움)
+- `MEDIUM` (보통)
+- `HARD` (어려움)
+- `VERY_HARD` (매우 어려움)
 
 ### Secrets (ADMIN only)
 - `POST /api/secrets/openai-api-key` - Store OpenAI key to S3
@@ -199,6 +280,52 @@ Use `@EntityGraph` or JOIN FETCH to avoid N+1:
        "LEFT JOIN FETCH s.grade " +
        "WHERE s.id = :id")
 Optional<Subject> findByIdWithGrade(@Param("id") Long id);
+```
+
+### Calculating Question Counts by Difficulty
+
+When displaying concept statistics, use custom repository methods:
+
+```java
+// In QuestionRepository
+Long countByConceptId(Long conceptId);
+Long countByConceptIdAndDifficulty(Long conceptId, String difficulty);
+
+// In ConceptService.convertToDto()
+Long veryEasyCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "VERY_EASY");
+Long easyCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "EASY");
+// ... etc for all 5 difficulty levels
+```
+
+Frontend displays as: `2/3/5/1/0` (VeryEasy/Easy/Medium/Hard/VeryHard)
+
+### Frontend Filtering Pattern (Client-Side)
+
+```javascript
+// 1. Define filter states
+const [filterGrade, setFilterGrade] = useState('');
+const [filterConcept, setFilterConcept] = useState('');
+
+// 2. Apply filters with useMemo (performance optimization)
+const filteredQuestions = useMemo(() => {
+  return questions.filter(question => {
+    if (filterGrade && question.gradeId !== parseInt(filterGrade)) return false;
+    if (filterConcept && !question.concepts.some(c =>
+      c.displayName.toLowerCase().includes(filterConcept.toLowerCase())
+    )) return false;
+    return true;
+  });
+}, [questions, filterGrade, filterConcept]);
+
+// 3. Reset pagination when filters change
+useEffect(() => {
+  setCurrentPage(1);
+}, [filterGrade, filterConcept]);
+
+// 4. Paginate AFTER filtering
+const indexOfLastItem = currentPage * itemsPerPage;
+const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+const currentItems = filteredQuestions.slice(indexOfFirstItem, indexOfLastItem);
 ```
 
 ### Handling File Uploads
@@ -267,6 +394,39 @@ curl -X POST http://localhost:8081/api/questions/generate-ai \
 **"S3 is not configured":** Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
 
 **NoSuchKeyException:** Secret doesn't exist in S3, use POST /api/secrets/openai-api-key to store it
+
+### Question-Grade Display Issues
+
+**Problem:** QuestionManagement page shows level (교육과정) instead of grade (학년)
+
+**Solution:** Questions don't have direct grade reference. Grade info comes from: Question → SubUnit → Unit → Grade
+
+In QuestionService:
+```java
+// Get grade from question's hierarchy
+Long gradeId = null;
+String gradeName = null;
+if (question.getSubUnit() != null && question.getSubUnit().getUnit() != null) {
+    Grade grade = question.getSubUnit().getUnit().getGrade();
+    if (grade != null) {
+        gradeId = grade.getId();
+        gradeName = grade.getName();
+    }
+}
+```
+
+In frontend, display `question.gradeName` not `question.levelName`
+
+### Concept Question Count Shows 0
+
+**Problem:** Concepts show 0 questions even when questions exist
+
+**Root Cause:** Frontend was using hardcoded `questionCount: 0` or backend wasn't calculating counts
+
+**Solution:**
+1. Add repository methods: `countByConceptId(Long conceptId)`
+2. In ConceptService, calculate actual counts in `convertToDto()`
+3. Frontend uses API data, not hardcoded values
 
 ## Database Notes
 

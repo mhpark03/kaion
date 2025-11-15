@@ -265,10 +265,23 @@ public class QuestionService {
         Long correctCount = userAnswerRepository.countCorrectUsersByQuestionId(question.getId());
         Double correctRate = attemptCount > 0 ? (correctCount * 100.0 / attemptCount) : 0.0;
 
+        // Get grade information from SubUnit -> Unit -> Grade
+        Long gradeId = null;
+        String gradeName = null;
+        if (question.getSubUnit() != null && question.getSubUnit().getUnit() != null) {
+            Grade grade = question.getSubUnit().getUnit().getGrade();
+            if (grade != null) {
+                gradeId = grade.getId();
+                gradeName = grade.getName();
+            }
+        }
+
         return QuestionDto.builder()
                 .id(question.getId())
                 .levelId(question.getLevel().getId())
                 .levelName(question.getLevel().getName())
+                .gradeId(gradeId)
+                .gradeName(gradeName)
                 .subUnitId(question.getSubUnit() != null ? question.getSubUnit().getId() : null)
                 .subUnitName(question.getSubUnit() != null ? question.getSubUnit().getName() : null)
                 .difficulty(question.getDifficulty())

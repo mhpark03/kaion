@@ -15,6 +15,8 @@ public class QuestionDto {
     private Long id;
     private Long levelId;
     private String levelName;
+    private Long gradeId;
+    private String gradeName;
     private Long subUnitId;
     private String subUnitName;
     private String difficulty; // E (쉬움), M (보통), H (어려움)

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { questionService } from '../services/questionService';
 import { levelService } from '../services/levelService';
+import { gradeService } from '../services/gradeService';
 import Navbar from './Navbar';
 import './Management.css';
 
@@ -10,11 +11,12 @@ const QuestionManagement = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [questions, setQuestions] = useState([]);
   const [levels, setLevels] = useState([]);
+  const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [error, setError] = useState('');
-  const [filterLevel, setFilterLevel] = useState('');
+  const [filterGrade, setFilterGrade] = useState('');
   const [filterConcept, setFilterConcept] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
@@ -57,12 +59,12 @@ const QuestionManagement = () => {
 
   useEffect(() => {
     setCurrentPage(1); // Reset to first page when filter changes
-  }, [filterLevel, filterConcept, filterType, filterDifficulty, filterQuestion, filterCorrectRate, filterAttemptCount]);
+  }, [filterGrade, filterConcept, filterType, filterDifficulty, filterQuestion, filterCorrectRate, filterAttemptCount]);
 
   // Apply filters using useMemo
   const filteredQuestions = useMemo(() => {
     return questions.filter(question => {
-      if (filterLevel && question.levelId !== parseInt(filterLevel)) return false;
+      if (filterGrade && question.gradeId !== parseInt(filterGrade)) return false;
       if (filterConcept && !(question.concepts && question.concepts.some(c =>
         (c.displayName || c.name).toLowerCase().includes(filterConcept.toLowerCase())
       ))) return false;
@@ -86,12 +88,14 @@ const QuestionManagement = () => {
 
       return true;
     });
-  }, [questions, filterLevel, filterConcept, filterType, filterDifficulty, filterQuestion, filterCorrectRate, filterAttemptCount]);
+  }, [questions, filterGrade, filterConcept, filterType, filterDifficulty, filterQuestion, filterCorrectRate, filterAttemptCount]);
 
   const loadData = async () => {
     try {
       const levelsRes = await levelService.getAll();
+      const gradesRes = await gradeService.getAll();
       setLevels(levelsRes.data);
+      setGrades(gradesRes.data);
       await loadQuestions();
     } catch (error) {
       setError('데이터를 불러오는데 실패했습니다');
@@ -270,10 +274,10 @@ const QuestionManagement = () => {
 
         <div className="filters-container">
           <div className="filters-row">
-          <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)} className="filter-level">
+          <select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)} className="filter-level">
             <option value="">전체 학년</option>
-            {levels.map((l) => (
-              <option key={l.id} value={l.id}>{l.displayName || l.name}</option>
+            {grades.map((g) => (
+              <option key={g.id} value={g.id}>{g.displayName || g.name}</option>
             ))}
           </select>
 
@@ -358,7 +362,7 @@ const QuestionManagement = () => {
                 return currentItems.map((question) => (
                   <tr key={question.id}>
                     <td className="level-cell">
-                      <span className="badge level-badge">{question.levelName}</span>
+                      <span className="badge level-badge">{question.gradeName || 'N/A'}</span>
                     </td>
                     <td className="concept-cell">
                       <div className="concept-info">
