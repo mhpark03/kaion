@@ -49,8 +49,9 @@ jobs:
       - name: Prepare deployment package
         run: |
           cd backend/build/libs
-          # Find the JAR file
-          JAR_FILE=$(ls *.jar | head -1)
+          # Find the JAR file (exclude -plain.jar)
+          JAR_FILE=$(ls *.jar | grep -v plain | head -1)
+          echo "Using JAR file: $JAR_FILE"
           # Create Procfile for Elastic Beanstalk
           echo "web: java -jar $JAR_FILE" > Procfile
           # Create ZIP with JAR and Procfile
