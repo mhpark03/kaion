@@ -36,10 +36,13 @@ jobs:
         id: timestamp
         run: echo "timestamp=$(date +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
 
-      - name: Generate deployment package
+      - name: Prepare deployment package
         run: |
           cd backend/build/libs
-          zip -r ../../../deploy-backend-${{ steps.timestamp.outputs.timestamp }}.zip *.jar
+          # Find the JAR file
+          JAR_FILE=$(ls *.jar | head -1)
+          # Copy JAR to root and rename
+          cp $JAR_FILE ../../../application.jar
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
@@ -50,7 +53,7 @@ jobs:
           environment_name: kiosk-backend-prod-v2
           region: ${{ env.AWS_REGION }}
           version_label: edutest-${{ steps.timestamp.outputs.timestamp }}
-          deployment_package: deploy-backend-${{ steps.timestamp.outputs.timestamp }}.zip
+          deployment_package: application.jar
           wait_for_deployment: true
           wait_for_environment_recovery: 300
 
