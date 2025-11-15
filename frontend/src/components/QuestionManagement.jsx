@@ -18,6 +18,9 @@ const QuestionManagement = () => {
   const [filterConcept, setFilterConcept] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
+  const [filterQuestion, setFilterQuestion] = useState('');
+  const [filterCorrectRate, setFilterCorrectRate] = useState('');
+  const [filterAttemptCount, setFilterAttemptCount] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
 
@@ -54,7 +57,7 @@ const QuestionManagement = () => {
 
   useEffect(() => {
     setCurrentPage(1); // Reset to first page when filter changes
-  }, [filterLevel, filterConcept, filterType, filterDifficulty]);
+  }, [filterLevel, filterConcept, filterType, filterDifficulty, filterQuestion, filterCorrectRate, filterAttemptCount]);
 
   // Apply filters using useMemo
   const filteredQuestions = useMemo(() => {
@@ -65,9 +68,25 @@ const QuestionManagement = () => {
       ))) return false;
       if (filterType && question.questionType !== filterType) return false;
       if (filterDifficulty && question.difficulty !== filterDifficulty) return false;
+      if (filterQuestion && !question.questionText.toLowerCase().includes(filterQuestion.toLowerCase())) return false;
+
+      // Filter by correct rate
+      if (filterCorrectRate) {
+        const rate = question.correctRate || 0;
+        if (filterCorrectRate === 'high' && rate < 90) return false;
+        if (filterCorrectRate === 'low' && rate > 40) return false;
+      }
+
+      // Filter by attempt count
+      if (filterAttemptCount) {
+        const count = question.attemptCount || 0;
+        if (filterAttemptCount === 'high' && count < 100) return false;
+        if (filterAttemptCount === 'low' && count >= 100) return false;
+      }
+
       return true;
     });
-  }, [questions, filterLevel, filterConcept, filterType, filterDifficulty]);
+  }, [questions, filterLevel, filterConcept, filterType, filterDifficulty, filterQuestion, filterCorrectRate, filterAttemptCount]);
 
   const loadData = async () => {
     try {
@@ -278,6 +297,26 @@ const QuestionManagement = () => {
             <option value="MEDIUM">보통</option>
             <option value="HARD">어려움</option>
             <option value="VERY_HARD">매우 어려움</option>
+          </select>
+
+          <input
+            type="text"
+            placeholder="문제 설명 검색..."
+            value={filterQuestion}
+            onChange={(e) => setFilterQuestion(e.target.value)}
+            className="filter-input"
+          />
+
+          <select value={filterCorrectRate} onChange={(e) => setFilterCorrectRate(e.target.value)}>
+            <option value="">전체 정답률</option>
+            <option value="high">90% 이상</option>
+            <option value="low">40% 이하</option>
+          </select>
+
+          <select value={filterAttemptCount} onChange={(e) => setFilterAttemptCount(e.target.value)}>
+            <option value="">전체 시도</option>
+            <option value="high">100명 이상</option>
+            <option value="low">100명 이하</option>
           </select>
         </div>
 

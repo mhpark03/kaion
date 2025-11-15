@@ -263,7 +263,8 @@
 
 /* Question Management Specific */
 .filters {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
   margin-bottom: 20px;
   max-width: 1400px;
@@ -272,7 +273,7 @@
 }
 
 .filters select {
-  flex: 1;
+  width: 100%;
   padding: 12px 15px;
   border: 2px solid white;
   border-radius: 8px;
@@ -282,12 +283,13 @@
 }
 
 .filters .filter-input {
-  flex: 1;
+  width: 100%;
   padding: 12px 15px;
   border: 2px solid white;
   border-radius: 8px;
   font-size: 14px;
   background: white;
+  box-sizing: border-box;
 }
 
 .questions-list {
