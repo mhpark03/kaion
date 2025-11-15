@@ -262,34 +262,69 @@
 }
 
 /* Question Management Specific */
-.filters {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
+.filters-row {
+  display: flex;
+  gap: 10px;
   margin-bottom: 20px;
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
+  align-items: center;
 }
 
-.filters select {
-  width: 100%;
-  padding: 12px 15px;
-  border: 2px solid white;
-  border-radius: 8px;
-  font-size: 14px;
-  background: white;
-  cursor: pointer;
-}
-
-.filters .filter-input {
-  width: 100%;
-  padding: 12px 15px;
+.filters-row select,
+.filters-row input {
+  padding: 10px 12px;
   border: 2px solid white;
   border-radius: 8px;
   font-size: 14px;
   background: white;
   box-sizing: border-box;
+}
+
+.filters-row select {
+  cursor: pointer;
+}
+
+/* Match table column widths */
+.filter-level {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.filter-concept {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.filter-type {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.filter-difficulty {
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.filter-question {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-attempt {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.filter-rate {
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.filter-actions {
+  width: 110px;
+  flex-shrink: 0;
 }
 
 .questions-list {
@@ -431,8 +466,17 @@
     grid-template-columns: 1fr;
   }
 
-  .filters {
+  .filters-row {
     flex-direction: column;
+  }
+
+  .filters-row select,
+  .filters-row input {
+    width: 100% !important;
+  }
+
+  .filter-actions {
+    display: none;
   }
 }
 

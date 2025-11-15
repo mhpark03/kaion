@@ -268,8 +268,8 @@ const QuestionManagement = () => {
           </button>
         </div>
 
-        <div className="filters">
-          <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
+        <div className="filters-row">
+          <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)} className="filter-level">
             <option value="">전체 학년</option>
             {levels.map((l) => (
               <option key={l.id} value={l.id}>{l.displayName || l.name}</option>
@@ -281,16 +281,16 @@ const QuestionManagement = () => {
             placeholder="핵심개념 검색..."
             value={filterConcept}
             onChange={(e) => setFilterConcept(e.target.value)}
-            className="filter-input"
+            className="filter-concept"
           />
 
-          <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+          <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="filter-type">
             <option value="">전체 유형</option>
             <option value="MULTIPLE_CHOICE">객관식</option>
             <option value="TRUE_FALSE">O/X</option>
           </select>
 
-          <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)}>
+          <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)} className="filter-difficulty">
             <option value="">전체 난이도</option>
             <option value="VERY_EASY">매우 쉬움</option>
             <option value="EASY">쉬움</option>
@@ -304,20 +304,22 @@ const QuestionManagement = () => {
             placeholder="문제 설명 검색..."
             value={filterQuestion}
             onChange={(e) => setFilterQuestion(e.target.value)}
-            className="filter-input"
+            className="filter-question"
           />
 
-          <select value={filterCorrectRate} onChange={(e) => setFilterCorrectRate(e.target.value)}>
+          <select value={filterAttemptCount} onChange={(e) => setFilterAttemptCount(e.target.value)} className="filter-attempt">
+            <option value="">전체 시도</option>
+            <option value="high">100명 이상</option>
+            <option value="low">100명 이하</option>
+          </select>
+
+          <select value={filterCorrectRate} onChange={(e) => setFilterCorrectRate(e.target.value)} className="filter-rate">
             <option value="">전체 정답률</option>
             <option value="high">90% 이상</option>
             <option value="low">40% 이하</option>
           </select>
 
-          <select value={filterAttemptCount} onChange={(e) => setFilterAttemptCount(e.target.value)}>
-            <option value="">전체 시도</option>
-            <option value="high">100명 이상</option>
-            <option value="low">100명 이하</option>
-          </select>
+          <div className="filter-actions"></div>
         </div>
 
         {error && <div className="error-message">{error}</div>}
