@@ -261,11 +261,8 @@ const QuestionManagement = () => {
       <Navbar />
 
       <div className="management-content">
-        <div className="management-header">
+        <div className="management-header-simple">
           <h1>문제 관리</h1>
-          <button onClick={() => navigate('/question-create')} className="btn-create">
-            + 새 문제
-          </button>
         </div>
 
         <div className="filters-row">
@@ -319,7 +316,9 @@ const QuestionManagement = () => {
             <option value="low">40% 이하</option>
           </select>
 
-          <div className="filter-actions"></div>
+          <button onClick={() => navigate('/question-create')} className="btn-create-inline">
+            + 새 문제
+          </button>
         </div>
 
         {error && <div className="error-message">{error}</div>}
