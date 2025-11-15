@@ -156,3 +156,10 @@ MIT License
 
 프로젝트 관련 문의사항은 이슈를 등록해주세요.
 # Trigger deployment - 2025년 11월 15일 토 오후  2:58:07
+
+
+## Recent Updates
+
+- Added CORS configuration guides
+- Added CloudFront setup documentation
+- Improved deployment workflow
