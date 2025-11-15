@@ -66,28 +66,60 @@ jobs:
             --application-name kiosk-backend \
             --version-label $VERSION_LABEL \
             --source-bundle S3Bucket=elasticbeanstalk-${{ env.AWS_REGION }}-638596943554,S3Key=kiosk-backend/$ZIP_FILE \
+            --region ${{ env.AWS_REGION }} \
             --process
 
           echo "Application version created: $VERSION_LABEL"
 
           # Wait for version to be processed
           echo "Waiting for application version to be processed..."
+          echo "Region: ${{ env.AWS_REGION }}"
+          echo "Application: kiosk-backend"
+          echo "Version Label: $VERSION_LABEL"
+
           MAX_ATTEMPTS=30
           ATTEMPT=0
           while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-            STATUS=$(aws elasticbeanstalk describe-application-versions \
+            # Get full version info for debugging
+            VERSION_INFO=$(aws elasticbeanstalk describe-application-versions \
               --application-name kiosk-backend \
               --version-labels $VERSION_LABEL \
-              --query 'ApplicationVersions[0].Status' \
-              --output text)
+              --region ${{ env.AWS_REGION }})
+
+            # Check if version exists
+            VERSION_COUNT=$(echo "$VERSION_INFO" | jq '.ApplicationVersions | length')
+
+            if [ "$VERSION_COUNT" = "0" ]; then
+              echo "⚠ Warning: Version not found in describe-application-versions (attempt $((ATTEMPT+1))/$MAX_ATTEMPTS)"
+              echo "This may be a propagation delay. Waiting..."
+              sleep 10
+              ATTEMPT=$((ATTEMPT+1))
+              continue
+            fi
+
+            # Get status
+            STATUS=$(echo "$VERSION_INFO" | jq -r '.ApplicationVersions[0].Status')
 
             echo "Current status: $STATUS (attempt $((ATTEMPT+1))/$MAX_ATTEMPTS)"
 
             if [ "$STATUS" = "PROCESSED" ]; then
               echo "✓ Application version is ready!"
+              # Verify version one more time before proceeding
+              echo "Final verification:"
+              aws elasticbeanstalk describe-application-versions \
+                --application-name kiosk-backend \
+                --version-labels $VERSION_LABEL \
+                --region ${{ env.AWS_REGION }} \
+                --query 'ApplicationVersions[0].[VersionLabel,Status,DateCreated]' \
+                --output table
               break
             elif [ "$STATUS" = "FAILED" ]; then
               echo "✗ Error: Application version processing failed"
+              echo "$VERSION_INFO" | jq '.ApplicationVersions[0]'
+              exit 1
+            elif [ "$STATUS" = "null" ] || [ -z "$STATUS" ]; then
+              echo "⚠ Warning: Unexpected status value: '$STATUS'"
+              echo "$VERSION_INFO" | jq '.ApplicationVersions[0]'
               exit 1
             fi
 
@@ -100,11 +132,24 @@ jobs:
             exit 1
           fi
 
+          # Small delay to ensure propagation
+          echo "Waiting 5 seconds for AWS API propagation..."
+          sleep 5
+
+          # List all versions to verify
+          echo "All application versions:"
+          aws elasticbeanstalk describe-application-versions \
+            --application-name kiosk-backend \
+            --region ${{ env.AWS_REGION }} \
+            --query 'ApplicationVersions[*].[VersionLabel,Status]' \
+            --output table | head -20
+
           # Now update environment
           echo "Updating environment with version: $VERSION_LABEL"
           aws elasticbeanstalk update-environment \
             --environment-name kiosk-backend-prod-v2 \
-            --version-label $VERSION_LABEL
+            --version-label $VERSION_LABEL \
+            --region ${{ env.AWS_REGION }}
 
           echo "✓ Deployment initiated successfully. Version: $VERSION_LABEL"
 
