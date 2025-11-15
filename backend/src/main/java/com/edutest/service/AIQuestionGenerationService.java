@@ -383,7 +383,7 @@ public class AIQuestionGenerationService {
     }
 
     /**
-     * Download image from URL and save to local storage
+     * Download image from OpenAI URL and save to S3
      * Returns the relative path that can be accessed via the backend API
      */
     private String downloadAndSaveImage(String imageUrl) throws IOException {
@@ -396,23 +396,19 @@ public class AIQuestionGenerationService {
                 throw new IOException("Failed to download image from OpenAI");
             }
 
-            // Create upload directory if it doesn't exist
-            Path uploadPath = Paths.get(uploadDir, "ai-generated");
-            Files.createDirectories(uploadPath);
-
             // Generate unique filename
             String filename = "dalle_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString() + ".png";
-            Path filePath = uploadPath.resolve(filename);
 
-            // Save image to local storage
-            Files.write(filePath, imageBytes);
+            // Upload to S3
+            String s3Key = "question-images/ai-generated/" + filename;
+            secretService.uploadImage(s3Key, imageBytes, "image/png");
 
-            log.info("Image saved successfully to: {}", filePath);
+            log.info("Image uploaded successfully to S3: {}", s3Key);
 
             // Return relative path that can be accessed via API
             return "/api/questions/images/ai-generated/" + filename;
         } catch (Exception e) {
-            log.error("Failed to download and save image: {}", e.getMessage(), e);
+            log.error("Failed to download and save image to S3: {}", e.getMessage(), e);
             throw new IOException("Failed to save generated image: " + e.getMessage(), e);
         }
     }
