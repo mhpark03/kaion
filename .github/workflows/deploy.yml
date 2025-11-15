@@ -67,6 +67,10 @@ jobs:
             --version-label $VERSION_LABEL \
             --source-bundle S3Bucket=elasticbeanstalk-${{ env.AWS_REGION }}-638596943554,S3Key=kiosk-backend/$ZIP_FILE
 
+          # Wait for version to be processed
+          echo "Waiting for application version to be processed..."
+          sleep 5
+
           # Update environment
           aws elasticbeanstalk update-environment \
             --environment-name kiosk-backend-prod-v2 \
