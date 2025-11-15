@@ -8,7 +8,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate  # Use validate or none in production
+      ddl-auto: update  # Auto-create/update tables on startup
     show-sql: false  # Disable SQL logging in production
 
 # CORS 설정 - AWS 프론트엔드 URL로 설정
