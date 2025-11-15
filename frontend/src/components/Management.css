@@ -266,18 +266,19 @@
   display: flex;
   gap: 10px;
   margin-bottom: 20px;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   align-items: center;
 }
 
 .filters-row select,
 .filters-row input {
-  padding: 10px 12px;
-  border: 2px solid white;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
   background: white;
   box-sizing: border-box;
 }
@@ -286,39 +287,45 @@
   cursor: pointer;
 }
 
-/* Match table column widths */
+/* Match table column widths - proportional to table */
 .filter-level {
-  width: 100px;
+  width: 8%;
+  min-width: 80px;
   flex-shrink: 0;
 }
 
 .filter-concept {
-  width: 120px;
+  width: 12%;
+  min-width: 100px;
   flex-shrink: 0;
 }
 
 .filter-type {
-  width: 90px;
+  width: 8%;
+  min-width: 80px;
   flex-shrink: 0;
 }
 
 .filter-difficulty {
-  width: 110px;
+  width: 10%;
+  min-width: 90px;
   flex-shrink: 0;
 }
 
 .filter-question {
   flex: 1;
-  min-width: 200px;
+  min-width: 150px;
 }
 
 .filter-attempt {
-  width: 100px;
+  width: 10%;
+  min-width: 90px;
   flex-shrink: 0;
 }
 
 .filter-rate {
-  width: 100px;
+  width: 10%;
+  min-width: 90px;
   flex-shrink: 0;
 }
 
@@ -582,7 +589,7 @@
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 15px;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .questions-table thead {
@@ -628,7 +635,7 @@
 }
 
 .level-cell {
-  width: 1%;
+  width: 8%;
   text-align: left;
   white-space: nowrap;
 }
@@ -641,8 +648,8 @@
 }
 
 .concept-cell {
-  width: 90px;
-  max-width: 90px;
+  width: 12%;
+  max-width: 150px;
 }
 
 .concept-info {
@@ -665,7 +672,7 @@
 }
 
 .type-cell {
-  width: 1%;
+  width: 8%;
   text-align: left;
   white-space: nowrap;
 }
@@ -679,7 +686,7 @@
 }
 
 .difficulty-cell {
-  width: 1%;
+  width: 10%;
   text-align: left;
   white-space: nowrap;
 }
@@ -710,7 +717,7 @@
 }
 
 .attempt-cell {
-  width: 1%;
+  width: 10%;
   text-align: left;
   white-space: nowrap;
 }
@@ -723,7 +730,7 @@
 }
 
 .rate-cell {
-  width: 1%;
+  width: 10%;
   text-align: left;
   white-space: nowrap;
 }
