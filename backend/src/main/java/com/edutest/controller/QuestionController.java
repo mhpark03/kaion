@@ -9,11 +9,18 @@ import com.edutest.service.FileStorageService;
 import com.edutest.service.QuestionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @RestController
@@ -25,6 +32,9 @@ public class QuestionController {
     private final FileStorageService fileStorageService;
     private final AIQuestionGenerationService aiQuestionGenerationService;
     private final ObjectMapper objectMapper;
+
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     @GetMapping
     public ResponseEntity<List<QuestionDto>> getAllQuestions(
@@ -134,6 +144,29 @@ public class QuestionController {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Failed to generate question with AI: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Serve AI-generated images
+     * This endpoint allows the frontend to access images downloaded from OpenAI
+     */
+    @GetMapping("/images/ai-generated/{filename:.+}")
+    public ResponseEntity<Resource> serveAIGeneratedImage(@PathVariable String filename) {
+        try {
+            Path filePath = Paths.get(uploadDir, "ai-generated", filename);
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists() || !resource.isReadable()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
         }
     }
 }

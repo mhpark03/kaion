@@ -334,9 +334,15 @@ public class AIQuestionGenerationService {
 
     private String generateQuestionImage(String questionText, String conceptName) {
         try {
+            // Get API key with fallback logic
+            String apiKey = getOpenAIApiKey();
+            if (apiKey == null || apiKey.trim().isEmpty()) {
+                throw new RuntimeException("OpenAI API key not configured");
+            }
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(openaiApiKey);
+            headers.setBearerAuth(apiKey);
 
             String imagePrompt = String.format(
                 "Educational illustration for a science question about '%s'. " +
@@ -363,10 +369,51 @@ public class AIQuestionGenerationService {
             );
 
             JsonNode root = objectMapper.readTree(response.getBody());
-            return root.path("data").get(0).path("url").asText();
+            String imageUrl = root.path("data").get(0).path("url").asText();
+
+            // Download the image from OpenAI and save it locally to avoid CORS issues
+            log.info("Downloading generated image from OpenAI...");
+            String savedImagePath = downloadAndSaveImage(imageUrl);
+
+            return savedImagePath;
         } catch (Exception e) {
             log.error("Error generating image with DALL-E", e);
             throw new RuntimeException("Failed to generate image: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Download image from URL and save to local storage
+     * Returns the relative path that can be accessed via the backend API
+     */
+    private String downloadAndSaveImage(String imageUrl) throws IOException {
+        try {
+            // Download image from OpenAI URL
+            ResponseEntity<byte[]> imageResponse = restTemplate.getForEntity(imageUrl, byte[].class);
+            byte[] imageBytes = imageResponse.getBody();
+
+            if (imageBytes == null || imageBytes.length == 0) {
+                throw new IOException("Failed to download image from OpenAI");
+            }
+
+            // Create upload directory if it doesn't exist
+            Path uploadPath = Paths.get(uploadDir, "ai-generated");
+            Files.createDirectories(uploadPath);
+
+            // Generate unique filename
+            String filename = "dalle_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString() + ".png";
+            Path filePath = uploadPath.resolve(filename);
+
+            // Save image to local storage
+            Files.write(filePath, imageBytes);
+
+            log.info("Image saved successfully to: {}", filePath);
+
+            // Return relative path that can be accessed via API
+            return "/api/questions/images/ai-generated/" + filename;
+        } catch (Exception e) {
+            log.error("Failed to download and save image: {}", e.getMessage(), e);
+            throw new IOException("Failed to save generated image: " + e.getMessage(), e);
         }
     }
 
