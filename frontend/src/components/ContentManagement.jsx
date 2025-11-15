@@ -333,7 +333,8 @@ const ContentManagement = () => {
         unitDisplayName: unit ? getUnitName(unit.id) : '-',
         gradeDisplayName: unit ? getGradeName(unit.gradeId) : '-',
         levelDisplayName: grade ? getLevelName(grade.levelId) : '-',
-        questionCount: concept.questionCount || 0
+        questionCount: concept.questionCount || 0,
+        questionCountByDifficulty: `${concept.veryEasyCount || 0}/${concept.easyCount || 0}/${concept.mediumCount || 0}/${concept.hardCount || 0}/${concept.veryHardCount || 0}`
       };
     });
   };
@@ -381,7 +382,12 @@ const ContentManagement = () => {
                         <td>{item.unitDisplayName}</td>
                         <td>{item.subUnitDisplayName}</td>
                         <td className="name-cell">{item.displayName || item.name}</td>
-                        <td className="count-cell">{item.questionCount}</td>
+                        <td className="count-cell">
+                          <div className="difficulty-counts">
+                            {item.questionCountByDifficulty}
+                          </div>
+                          <div className="total-count">총 {item.questionCount}개</div>
+                        </td>
                       </>
                     )}
                     <td className="action-cell">

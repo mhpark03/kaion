@@ -25,4 +25,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Long countByLevelId(Long levelId);
 
     Long countByConceptId(Long conceptId);
+
+    Long countByConceptIdAndDifficulty(Long conceptId, String difficulty);
 }

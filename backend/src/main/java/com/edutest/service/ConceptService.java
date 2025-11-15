@@ -139,6 +139,11 @@ public class ConceptService {
 
     private ConceptDto convertToDto(Concept concept) {
         Long questionCount = questionRepository.countByConceptId(concept.getId());
+        Long veryEasyCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "VERY_EASY");
+        Long easyCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "EASY");
+        Long mediumCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "MEDIUM");
+        Long hardCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "HARD");
+        Long veryHardCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "VERY_HARD");
 
         return ConceptDto.builder()
                 .id(concept.getId())
@@ -149,6 +154,11 @@ public class ConceptService {
                 .description(concept.getDescription())
                 .orderIndex(concept.getOrderIndex())
                 .questionCount(questionCount)
+                .veryEasyCount(veryEasyCount)
+                .easyCount(easyCount)
+                .mediumCount(mediumCount)
+                .hardCount(hardCount)
+                .veryHardCount(veryHardCount)
                 .build();
     }
 }

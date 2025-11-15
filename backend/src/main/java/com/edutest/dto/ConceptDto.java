@@ -18,4 +18,9 @@ public class ConceptDto {
     private String description;
     private Integer orderIndex;
     private Long questionCount;
+    private Long veryEasyCount;
+    private Long easyCount;
+    private Long mediumCount;
+    private Long hardCount;
+    private Long veryHardCount;
 }
