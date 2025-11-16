@@ -214,16 +214,19 @@ const QuestionCreate = () => {
         options: options
       };
 
+      // If AI generated an image, include the URL directly in the request data
+      if (aiPreview.generatedImageUrl && !imageFile) {
+        requestData.referenceImage = aiPreview.generatedImageUrl;
+      }
+
       const formDataToSend = new FormData();
       formDataToSend.append('request', new Blob([JSON.stringify(requestData)], { type: 'application/json' }));
 
       // Include original reference files if provided
       if (imageFile) {
         formDataToSend.append('image', imageFile);
-      } else if (aiPreview.generatedImageFile) {
-        // Use AI-generated image if no reference image
-        formDataToSend.append('image', aiPreview.generatedImageFile);
       }
+      // Note: Don't re-upload AI-generated image - it's already in S3 and the URL is in requestData.referenceImage
 
       if (documentFile) {
         formDataToSend.append('document', documentFile);

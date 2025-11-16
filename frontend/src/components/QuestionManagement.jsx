@@ -178,7 +178,14 @@ const QuestionManagement = () => {
     });
     // Load existing image if available
     if (question.referenceImage) {
-      setImagePreview(question.referenceImage);
+      // If referenceImage starts with /api/, it's already a full API path
+      // Otherwise, it might be a relative path that needs the API base URL
+      const imageUrl = question.referenceImage.startsWith('/api/')
+        ? `http://localhost:8081${question.referenceImage}`
+        : question.referenceImage.startsWith('http')
+        ? question.referenceImage
+        : `http://localhost:8081/api/${question.referenceImage}`;
+      setImagePreview(imageUrl);
     }
     setShowModal(true);
   };

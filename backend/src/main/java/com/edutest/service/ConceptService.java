@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +25,38 @@ public class ConceptService {
 
     @Transactional(readOnly = true)
     public List<ConceptDto> getAllConcepts() {
-        return conceptRepository.findAll().stream()
-                .map(this::convertToDto)
+        // Fetch all concepts
+        List<Concept> concepts = conceptRepository.findAll();
+
+        // If no concepts, return empty list
+        if (concepts.isEmpty()) {
+            return List.of();
+        }
+
+        // Extract concept IDs
+        List<Long> conceptIds = concepts.stream()
+                .map(Concept::getId)
+                .collect(Collectors.toList());
+
+        // Single optimized query to get all question counts grouped by concept and difficulty
+        // This replaces N+1 queries (6 queries per concept) with a single query
+        List<Object[]> questionCounts = questionRepository
+                .countQuestionsGroupedByConceptAndDifficulty(conceptIds);
+
+        // Build a map: conceptId -> (difficulty -> count)
+        Map<Long, Map<String, Long>> countsMap = new HashMap<>();
+        for (Object[] row : questionCounts) {
+            Long conceptId = (Long) row[0];
+            String difficulty = (String) row[1];
+            Long count = (Long) row[2];
+
+            countsMap.putIfAbsent(conceptId, new HashMap<>());
+            countsMap.get(conceptId).put(difficulty, count);
+        }
+
+        // Convert to DTOs using the pre-fetched counts
+        return concepts.stream()
+                .map(concept -> convertToDto(concept, countsMap.get(concept.getId())))
                 .collect(Collectors.toList());
     }
 
@@ -137,6 +169,30 @@ public class ConceptService {
         }
     }
 
+    // Optimized version using pre-fetched counts (used by getAllConcepts)
+    private ConceptDto convertToDto(Concept concept, Map<String, Long> difficultyCounts) {
+        Map<String, Long> counts = difficultyCounts != null ? difficultyCounts : new HashMap<>();
+
+        long totalCount = counts.values().stream().mapToLong(Long::longValue).sum();
+
+        return ConceptDto.builder()
+                .id(concept.getId())
+                .subUnitId(concept.getSubUnit() != null ? concept.getSubUnit().getId() : null)
+                .subUnitName(concept.getSubUnit() != null ? concept.getSubUnit().getName() : null)
+                .name(concept.getName())
+                .displayName(concept.getDisplayName())
+                .description(concept.getDescription())
+                .orderIndex(concept.getOrderIndex())
+                .questionCount(totalCount)
+                .veryEasyCount(counts.getOrDefault("VERY_EASY", 0L))
+                .easyCount(counts.getOrDefault("EASY", 0L))
+                .mediumCount(counts.getOrDefault("MEDIUM", 0L))
+                .hardCount(counts.getOrDefault("HARD", 0L))
+                .veryHardCount(counts.getOrDefault("VERY_HARD", 0L))
+                .build();
+    }
+
+    // Original version with N+1 queries (used by getConceptById for single concept)
     private ConceptDto convertToDto(Concept concept) {
         Long questionCount = questionRepository.countByConceptId(concept.getId());
         Long veryEasyCount = questionRepository.countByConceptIdAndDifficulty(concept.getId(), "VERY_EASY");

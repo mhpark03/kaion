@@ -65,11 +65,14 @@ public class QuestionController {
         try {
             QuestionCreateRequest request = objectMapper.readValue(requestJson, QuestionCreateRequest.class);
 
-            // Store image if provided
+            // Store image if provided as file upload
+            // If referenceImage is already set (e.g., from AI generation), don't overwrite it
             if (image != null && !image.isEmpty()) {
                 String filename = fileStorageService.storeFile(image);
                 request.setReferenceImage(filename);
             }
+            // Note: If referenceImage is already set in the request (from AI generation),
+            // it will be used as-is without file upload
 
             // Store document if provided
             if (document != null && !document.isEmpty()) {
