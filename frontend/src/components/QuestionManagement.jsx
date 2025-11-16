@@ -13,6 +13,7 @@ const QuestionManagement = () => {
   const [levels, setLevels] = useState([]);
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingQuestions, setLoadingQuestions] = useState(false); // Background loading for questions
   const [showModal, setShowModal] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [error, setError] = useState('');
@@ -42,7 +43,7 @@ const QuestionManagement = () => {
   });
 
   useEffect(() => {
-    loadData();
+    loadPrimaryData();
   }, []);
 
   useEffect(() => {
@@ -90,26 +91,40 @@ const QuestionManagement = () => {
     });
   }, [questions, filterGrade, filterConcept, filterType, filterDifficulty, filterQuestion, filterCorrectRate, filterAttemptCount]);
 
-  const loadData = async () => {
+  // Load primary data first (for quick initial render)
+  const loadPrimaryData = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const levelsRes = await levelService.getAll();
-      const gradesRes = await gradeService.getAll();
+      // Load essential data first (levels and grades)
+      const [levelsRes, gradesRes] = await Promise.all([
+        levelService.getAll(),
+        gradeService.getAll()
+      ]);
       setLevels(levelsRes.data);
       setGrades(gradesRes.data);
-      await loadQuestions();
+
+      // Show UI immediately with filters
+      setLoading(false);
+
+      // Load questions in background
+      loadQuestions();
     } catch (error) {
       setError('데이터를 불러오는데 실패했습니다');
-    } finally {
       setLoading(false);
     }
   };
 
+  // Load questions in background
   const loadQuestions = async () => {
+    setLoadingQuestions(true);
     try {
       const response = await questionService.getAll();
       setQuestions(response.data);
     } catch (error) {
       setError('문제 목록을 불러오는데 실패했습니다');
+    } finally {
+      setLoadingQuestions(false);
     }
   };
 
@@ -273,7 +288,14 @@ const QuestionManagement = () => {
 
       <div className="management-content">
         <div className="management-header">
-          <h1>문제 관리</h1>
+          <h1>
+            문제 관리
+            {loadingQuestions && (
+              <span style={{ fontSize: '0.8rem', color: '#666', marginLeft: '10px' }}>
+                (문제 목록 로딩 중...)
+              </span>
+            )}
+          </h1>
           <button onClick={() => navigate('/question-create')} className="btn-create">
             + 새 문제
           </button>
@@ -365,6 +387,16 @@ const QuestionManagement = () => {
                   };
                   return difficultyMap[difficulty] || '보통';
                 };
+
+                if (currentItems.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan="8" style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                        {loadingQuestions ? '문제 목록을 불러오는 중...' : '등록된 문제가 없습니다'}
+                      </td>
+                    </tr>
+                  );
+                }
 
                 return currentItems.map((question) => (
                   <tr key={question.id}>
