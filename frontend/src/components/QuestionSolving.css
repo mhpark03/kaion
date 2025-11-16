@@ -337,3 +337,55 @@
   margin-bottom: 20px;
   border: 1px solid #f5c6cb;
 }
+
+/* Student profile info display */
+.student-profile-info {
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.student-profile-info h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+  font-size: 18px;
+}
+
+.profile-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 15px;
+}
+
+.profile-info-grid span {
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+}
+
+.profile-info-grid strong {
+  color: #007bff;
+  margin-right: 5px;
+}
+
+.profile-edit-hint {
+  font-size: 13px;
+  color: #666;
+  margin: 10px 0 0 0;
+  font-style: italic;
+}
+
+.profile-edit-hint a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.profile-edit-hint a:hover {
+  text-decoration: underline;
+}
