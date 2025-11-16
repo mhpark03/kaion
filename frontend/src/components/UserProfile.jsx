@@ -6,6 +6,7 @@ import { gradeService } from '../services/gradeService';
 import { unitService } from '../services/unitService';
 import { subUnitService } from '../services/subUnitService';
 import { DIFFICULTY_LEVELS } from '../constants/difficulty';
+import api from '../utils/api';
 import Navbar from './Navbar';
 import './UserProfile.css';
 
@@ -44,31 +45,34 @@ const UserProfile = () => {
 
   const loadData = async () => {
     try {
-      const [levelsResponse, gradesResponse, unitsResponse, subUnitsResponse] = await Promise.all([
+      // Load current user profile from API to get latest data
+      const [levelsResponse, gradesResponse, unitsResponse, subUnitsResponse, userResponse] = await Promise.all([
         levelService.getAll(),
         gradeService.getAll(),
         unitService.getAll(),
-        subUnitService.getAll()
+        subUnitService.getAll(),
+        api.get('/users/me')
       ]);
       setLevels(levelsResponse.data);
       setAllGrades(gradesResponse.data);
       setAllUnits(unitsResponse.data);
       setAllSubUnits(subUnitsResponse.data);
 
-      // Set initial form data from user
-      if (user) {
+      // Set initial form data from API response (latest data)
+      const latestUser = userResponse.data;
+      if (latestUser) {
         setFormData({
-          username: user.username || '',
-          email: user.email || '',
-          fullName: user.fullName || '',
+          username: latestUser.username || '',
+          email: latestUser.email || '',
+          fullName: latestUser.fullName || '',
           currentPassword: '',
           newPassword: '',
           confirmPassword: '',
-          levelId: user.levelId?.toString() || '',
-          gradeId: user.gradeId?.toString() || '',
-          unitId: user.unitId?.toString() || '',
-          subUnitId: user.subUnitId?.toString() || '',
-          proficiencyLevel: user.proficiencyLevel || ''
+          levelId: latestUser.levelId?.toString() || '',
+          gradeId: latestUser.gradeId?.toString() || '',
+          unitId: latestUser.unitId?.toString() || '',
+          subUnitId: latestUser.subUnitId?.toString() || '',
+          proficiencyLevel: latestUser.proficiencyLevel || ''
         });
       }
     } catch (err) {

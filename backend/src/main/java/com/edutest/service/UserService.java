@@ -111,14 +111,41 @@ public class UserService {
         String token = jwtTokenProvider.createToken(user.getUsername(), user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getUsername());
 
-        return AuthResponse.builder()
+        AuthResponse.AuthResponseBuilder builder = AuthResponse.builder()
                 .token(token)
                 .refreshToken(refreshToken)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole())
-                .build();
+                .proficiencyLevel(user.getProficiencyLevel());
+
+        if (user.getLevel() != null) {
+            builder.levelId(user.getLevel().getId())
+                    .levelName(user.getLevel().getName());
+        }
+
+        if (user.getGrade() != null) {
+            builder.gradeId(user.getGrade().getId())
+                    .gradeName(user.getGrade().getName());
+        }
+
+        if (user.getSubject() != null) {
+            builder.subjectId(user.getSubject().getId())
+                    .subjectName(user.getSubject().getDisplayName());
+        }
+
+        if (user.getUnit() != null) {
+            builder.unitId(user.getUnit().getId())
+                    .unitName(user.getUnit().getDisplayName());
+        }
+
+        if (user.getSubUnit() != null) {
+            builder.subUnitId(user.getSubUnit().getId())
+                    .subUnitName(user.getSubUnit().getDisplayName());
+        }
+
+        return builder.build();
     }
 
     @Transactional(readOnly = true)
@@ -140,14 +167,41 @@ public class UserService {
         String token = jwtTokenProvider.createToken(user.getUsername(), user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getUsername());
 
-        return AuthResponse.builder()
+        AuthResponse.AuthResponseBuilder builder = AuthResponse.builder()
                 .token(token)
                 .refreshToken(refreshToken)
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .role(user.getRole())
-                .build();
+                .proficiencyLevel(user.getProficiencyLevel());
+
+        if (user.getLevel() != null) {
+            builder.levelId(user.getLevel().getId())
+                    .levelName(user.getLevel().getName());
+        }
+
+        if (user.getGrade() != null) {
+            builder.gradeId(user.getGrade().getId())
+                    .gradeName(user.getGrade().getName());
+        }
+
+        if (user.getSubject() != null) {
+            builder.subjectId(user.getSubject().getId())
+                    .subjectName(user.getSubject().getDisplayName());
+        }
+
+        if (user.getUnit() != null) {
+            builder.unitId(user.getUnit().getId())
+                    .unitName(user.getUnit().getDisplayName());
+        }
+
+        if (user.getSubUnit() != null) {
+            builder.subUnitId(user.getSubUnit().getId())
+                    .subUnitName(user.getSubUnit().getDisplayName());
+        }
+
+        return builder.build();
     }
 
     @Transactional(readOnly = true)
