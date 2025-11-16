@@ -222,63 +222,66 @@ const UserProfile = () => {
               </div>
             </div>
 
-            <div className="form-section">
-              <h3>학습 정보</h3>
+            {/* 학습 정보 섹션 - 학생만 표시 */}
+            {user?.role === 'STUDENT' && (
+              <div className="form-section">
+                <h3>학습 정보</h3>
 
-              <div className="form-group">
-                <label htmlFor="levelId">교육과정</label>
-                <select
-                  id="levelId"
-                  name="levelId"
-                  value={formData.levelId}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-                  <option value="">선택하세요</option>
-                  {levels.map(level => (
-                    <option key={level.id} value={level.id}>
-                      {level.displayName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="form-group">
+                  <label htmlFor="levelId">교육과정</label>
+                  <select
+                    id="levelId"
+                    name="levelId"
+                    value={formData.levelId}
+                    onChange={handleChange}
+                    disabled={loading}
+                  >
+                    <option value="">선택하세요</option>
+                    {levels.map(level => (
+                      <option key={level.id} value={level.id}>
+                        {level.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="gradeId">학년</label>
-                <select
-                  id="gradeId"
-                  name="gradeId"
-                  value={formData.gradeId}
-                  onChange={handleChange}
-                  disabled={loading || !formData.levelId}
-                >
-                  <option value="">선택하세요</option>
-                  {grades.map(grade => (
-                    <option key={grade.id} value={grade.id}>
-                      {grade.displayName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <div className="form-group">
+                  <label htmlFor="gradeId">학년</label>
+                  <select
+                    id="gradeId"
+                    name="gradeId"
+                    value={formData.gradeId}
+                    onChange={handleChange}
+                    disabled={loading || !formData.levelId}
+                  >
+                    <option value="">선택하세요</option>
+                    {grades.map(grade => (
+                      <option key={grade.id} value={grade.id}>
+                        {grade.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              <div className="form-group">
-                <label htmlFor="proficiencyLevel">학습 수준</label>
-                <select
-                  id="proficiencyLevel"
-                  name="proficiencyLevel"
-                  value={formData.proficiencyLevel}
-                  onChange={handleChange}
-                  disabled={loading}
-                >
-                  <option value="">선택하세요</option>
-                  {DIFFICULTY_LEVELS.map(level => (
-                    <option key={level.value} value={level.value}>
-                      {level.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="form-group">
+                  <label htmlFor="proficiencyLevel">학습 수준 (난이도)</label>
+                  <select
+                    id="proficiencyLevel"
+                    name="proficiencyLevel"
+                    value={formData.proficiencyLevel}
+                    onChange={handleChange}
+                    disabled={loading}
+                  >
+                    <option value="">선택하세요</option>
+                    {DIFFICULTY_LEVELS.map(level => (
+                      <option key={level.value} value={level.value}>
+                        {level.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="form-section">
               <h3>비밀번호 변경</h3>

@@ -40,14 +40,64 @@ public class User {
     @Column(nullable = false, length = 20)
     private String role = "STUDENT";
 
+    // Student profile (1:1 relationship)
+    @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private StudentProfile studentProfile;
+
+    // Legacy fields - DEPRECATED: Use StudentProfile instead for student-specific data
+    // These fields are kept for backward compatibility but will be migrated to StudentProfile
+    /**
+     * @deprecated Use {@link StudentProfile#getLevel()} instead
+     */
+    @Deprecated
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "level_id")
     private Level level;
 
+    /**
+     * @deprecated Use {@link StudentProfile#getGrade()} instead
+     */
+    @Deprecated
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "grade_id")
     private Grade grade;
 
+    /**
+     * @deprecated Use {@link StudentProfile#getSubject()} instead
+     */
+    @Deprecated
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_id")
+    private Subject subject;
+
+    /**
+     * @deprecated Use {@link StudentProfile#getUnit()} instead
+     */
+    @Deprecated
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "unit_id")
+    private Unit unit;
+
+    /**
+     * @deprecated Use {@link StudentProfile#getSubUnit()} instead
+     */
+    @Deprecated
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sub_unit_id")
+    private SubUnit subUnit;
+
+    /**
+     * @deprecated Use {@link StudentProfile#getConcept()} instead
+     */
+    @Deprecated
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "concept_id")
+    private Concept concept;
+
+    /**
+     * @deprecated Use {@link StudentProfile#getProficiencyLevel()} instead
+     */
+    @Deprecated
     @Column(name = "proficiency_level", length = 20)
     private String proficiencyLevel;  // VERY_EASY, EASY, MEDIUM, HARD, VERY_HARD
 
