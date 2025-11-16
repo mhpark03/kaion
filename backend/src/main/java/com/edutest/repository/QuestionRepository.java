@@ -32,7 +32,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     // This replaces N+1 queries (6 queries per concept) with a single query
     @Query("SELECT c.id, q.difficulty, COUNT(q) " +
            "FROM Question q " +
-           "JOIN q.concepts c " +
+           "JOIN q.concept c " +
            "WHERE c.id IN :conceptIds " +
            "GROUP BY c.id, q.difficulty")
     List<Object[]> countQuestionsGroupedByConceptAndDifficulty(@Param("conceptIds") List<Long> conceptIds);
