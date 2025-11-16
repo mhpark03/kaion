@@ -19,5 +19,11 @@ public class UserResponse {
     private String levelName;
     private Long gradeId;
     private String gradeName;
+    private Long subjectId;
+    private String subjectName;
+    private Long unitId;
+    private String unitName;
+    private Long subUnitId;
+    private String subUnitName;
     private String proficiencyLevel;
 }

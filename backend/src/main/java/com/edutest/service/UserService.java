@@ -7,9 +7,15 @@ import com.edutest.dto.UserProfileUpdateRequest;
 import com.edutest.dto.UserResponse;
 import com.edutest.entity.Grade;
 import com.edutest.entity.Level;
+import com.edutest.entity.Subject;
+import com.edutest.entity.Unit;
+import com.edutest.entity.SubUnit;
 import com.edutest.entity.User;
 import com.edutest.repository.GradeRepository;
 import com.edutest.repository.LevelRepository;
+import com.edutest.repository.SubjectRepository;
+import com.edutest.repository.UnitRepository;
+import com.edutest.repository.SubUnitRepository;
 import com.edutest.repository.UserRepository;
 import com.edutest.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +23,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +35,9 @@ public class UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final LevelRepository levelRepository;
     private final GradeRepository gradeRepository;
+    private final SubjectRepository subjectRepository;
+    private final UnitRepository unitRepository;
+    private final SubUnitRepository subUnitRepository;
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
@@ -49,6 +60,9 @@ public class UserService {
         // Level과 Grade 조회
         Level level = null;
         Grade grade = null;
+        Subject subject = null;
+        Unit unit = null;
+        SubUnit subUnit = null;
 
         if (request.getLevelId() != null) {
             level = levelRepository.findById(request.getLevelId())
@@ -58,6 +72,22 @@ public class UserService {
         if (request.getGradeId() != null) {
             grade = gradeRepository.findById(request.getGradeId())
                     .orElseThrow(() -> new IllegalArgumentException("Invalid grade ID"));
+
+            // Auto-set subject, unit, subUnit to first item in selected grade
+            List<Subject> subjects = subjectRepository.findByGradeIdOrderByOrderIndexAsc(grade.getId());
+            if (!subjects.isEmpty()) {
+                subject = subjects.get(0);
+
+                List<Unit> units = unitRepository.findByGradeIdOrderByOrderIndexAsc(grade.getId());
+                if (!units.isEmpty()) {
+                    unit = units.get(0);
+
+                    List<SubUnit> subUnits = subUnitRepository.findByUnitIdOrderByOrderIndexAsc(unit.getId());
+                    if (!subUnits.isEmpty()) {
+                        subUnit = subUnits.get(0);
+                    }
+                }
+            }
         }
 
         User user = User.builder()
@@ -68,6 +98,9 @@ public class UserService {
                 .role(request.getRole() != null ? request.getRole() : "STUDENT")
                 .level(level)
                 .grade(grade)
+                .subject(subject)
+                .unit(unit)
+                .subUnit(subUnit)
                 .proficiencyLevel(request.getProficiencyLevel())
                 .active(true)
                 .build();
@@ -159,6 +192,25 @@ public class UserService {
             user.setGrade(grade);
         }
 
+        // Update subject, unit, subUnit
+        if (request.getSubjectId() != null) {
+            Subject subject = subjectRepository.findById(request.getSubjectId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid subject ID"));
+            user.setSubject(subject);
+        }
+
+        if (request.getUnitId() != null) {
+            Unit unit = unitRepository.findById(request.getUnitId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid unit ID"));
+            user.setUnit(unit);
+        }
+
+        if (request.getSubUnitId() != null) {
+            SubUnit subUnit = subUnitRepository.findById(request.getSubUnitId())
+                    .orElseThrow(() -> new IllegalArgumentException("Invalid sub-unit ID"));
+            user.setSubUnit(subUnit);
+        }
+
         // Update proficiency level
         if (request.getProficiencyLevel() != null) {
             user.setProficiencyLevel(request.getProficiencyLevel());
@@ -199,6 +251,21 @@ public class UserService {
         if (user.getGrade() != null) {
             builder.gradeId(user.getGrade().getId())
                     .gradeName(user.getGrade().getName());
+        }
+
+        if (user.getSubject() != null) {
+            builder.subjectId(user.getSubject().getId())
+                    .subjectName(user.getSubject().getDisplayName());
+        }
+
+        if (user.getUnit() != null) {
+            builder.unitId(user.getUnit().getId())
+                    .unitName(user.getUnit().getDisplayName());
+        }
+
+        if (user.getSubUnit() != null) {
+            builder.subUnitId(user.getSubUnit().getId())
+                    .subUnitName(user.getSubUnit().getDisplayName());
         }
 
         return builder.build();

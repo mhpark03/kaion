@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { levelService } from '../services/levelService';
 import { gradeService } from '../services/gradeService';
+import { subjectService } from '../services/subjectService';
+import { unitService } from '../services/unitService';
+import { subUnitService } from '../services/subUnitService';
 import { DIFFICULTY_LEVELS } from '../constants/difficulty';
 import Navbar from './Navbar';
 import './UserProfile.css';
@@ -20,12 +23,21 @@ const UserProfile = () => {
     confirmPassword: '',
     levelId: '',
     gradeId: '',
+    subjectId: '',
+    unitId: '',
+    subUnitId: '',
     proficiencyLevel: ''
   });
 
   const [levels, setLevels] = useState([]);
   const [grades, setGrades] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [subUnits, setSubUnits] = useState([]);
   const [allGrades, setAllGrades] = useState([]);
+  const [allSubjects, setAllSubjects] = useState([]);
+  const [allUnits, setAllUnits] = useState([]);
+  const [allSubUnits, setAllSubUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -36,12 +48,18 @@ const UserProfile = () => {
 
   const loadData = async () => {
     try {
-      const [levelsResponse, gradesResponse] = await Promise.all([
+      const [levelsResponse, gradesResponse, subjectsResponse, unitsResponse, subUnitsResponse] = await Promise.all([
         levelService.getAll(),
-        gradeService.getAll()
+        gradeService.getAll(),
+        subjectService.getAll(),
+        unitService.getAll(),
+        subUnitService.getAll()
       ]);
       setLevels(levelsResponse.data);
       setAllGrades(gradesResponse.data);
+      setAllSubjects(subjectsResponse.data);
+      setAllUnits(unitsResponse.data);
+      setAllSubUnits(subUnitsResponse.data);
 
       // Set initial form data from user
       if (user) {
@@ -54,6 +72,9 @@ const UserProfile = () => {
           confirmPassword: '',
           levelId: user.levelId?.toString() || '',
           gradeId: user.gradeId?.toString() || '',
+          subjectId: user.subjectId?.toString() || '',
+          unitId: user.unitId?.toString() || '',
+          subUnitId: user.subUnitId?.toString() || '',
           proficiencyLevel: user.proficiencyLevel || ''
         });
       }
@@ -77,14 +98,83 @@ const UserProfile = () => {
           g => g.id === parseInt(formData.gradeId)
         );
         if (!gradeExists) {
-          setFormData(prev => ({ ...prev, gradeId: '' }));
+          setFormData(prev => ({ ...prev, gradeId: '', subjectId: '', unitId: '', subUnitId: '' }));
         }
       }
     } else {
       setGrades([]);
-      setFormData(prev => ({ ...prev, gradeId: '' }));
+      setFormData(prev => ({ ...prev, gradeId: '', subjectId: '', unitId: '', subUnitId: '' }));
     }
   }, [formData.levelId, allGrades]);
+
+  // Filter subjects when grade changes
+  useEffect(() => {
+    if (formData.gradeId) {
+      const filteredSubjects = allSubjects.filter(
+        subject => subject.gradeId === parseInt(formData.gradeId)
+      );
+      setSubjects(filteredSubjects);
+
+      // Reset subject if it doesn't belong to selected grade
+      if (formData.subjectId) {
+        const subjectExists = filteredSubjects.some(
+          s => s.id === parseInt(formData.subjectId)
+        );
+        if (!subjectExists) {
+          setFormData(prev => ({ ...prev, subjectId: '', unitId: '', subUnitId: '' }));
+        }
+      }
+    } else {
+      setSubjects([]);
+      setFormData(prev => ({ ...prev, subjectId: '', unitId: '', subUnitId: '' }));
+    }
+  }, [formData.gradeId, allSubjects]);
+
+  // Filter units when grade changes (units are filtered by grade, not subject)
+  useEffect(() => {
+    if (formData.gradeId) {
+      const filteredUnits = allUnits.filter(
+        unit => unit.gradeId === parseInt(formData.gradeId)
+      );
+      setUnits(filteredUnits);
+
+      // Reset unit if it doesn't belong to selected grade
+      if (formData.unitId) {
+        const unitExists = filteredUnits.some(
+          u => u.id === parseInt(formData.unitId)
+        );
+        if (!unitExists) {
+          setFormData(prev => ({ ...prev, unitId: '', subUnitId: '' }));
+        }
+      }
+    } else {
+      setUnits([]);
+      setFormData(prev => ({ ...prev, unitId: '', subUnitId: '' }));
+    }
+  }, [formData.gradeId, allUnits]);
+
+  // Filter subUnits when unit changes
+  useEffect(() => {
+    if (formData.unitId) {
+      const filteredSubUnits = allSubUnits.filter(
+        subUnit => subUnit.unitId === parseInt(formData.unitId)
+      );
+      setSubUnits(filteredSubUnits);
+
+      // Reset subUnit if it doesn't belong to selected unit
+      if (formData.subUnitId) {
+        const subUnitExists = filteredSubUnits.some(
+          su => su.id === parseInt(formData.subUnitId)
+        );
+        if (!subUnitExists) {
+          setFormData(prev => ({ ...prev, subUnitId: '' }));
+        }
+      }
+    } else {
+      setSubUnits([]);
+      setFormData(prev => ({ ...prev, subUnitId: '' }));
+    }
+  }, [formData.unitId, allSubUnits]);
 
   const handleChange = (e) => {
     setFormData({
@@ -124,6 +214,9 @@ const UserProfile = () => {
         email: formData.email,
         levelId: formData.levelId ? parseInt(formData.levelId) : null,
         gradeId: formData.gradeId ? parseInt(formData.gradeId) : null,
+        subjectId: formData.subjectId ? parseInt(formData.subjectId) : null,
+        unitId: formData.unitId ? parseInt(formData.unitId) : null,
+        subUnitId: formData.subUnitId ? parseInt(formData.subUnitId) : null,
         proficiencyLevel: formData.proficiencyLevel || null
       };
 
@@ -258,6 +351,60 @@ const UserProfile = () => {
                     {grades.map(grade => (
                       <option key={grade.id} value={grade.id}>
                         {grade.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="subjectId">과목</label>
+                  <select
+                    id="subjectId"
+                    name="subjectId"
+                    value={formData.subjectId}
+                    onChange={handleChange}
+                    disabled={loading || !formData.gradeId}
+                  >
+                    <option value="">선택하세요</option>
+                    {subjects.map(subject => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="unitId">대단원</label>
+                  <select
+                    id="unitId"
+                    name="unitId"
+                    value={formData.unitId}
+                    onChange={handleChange}
+                    disabled={loading || !formData.gradeId}
+                  >
+                    <option value="">선택하세요</option>
+                    {units.map(unit => (
+                      <option key={unit.id} value={unit.id}>
+                        {unit.displayName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="subUnitId">소단원</label>
+                  <select
+                    id="subUnitId"
+                    name="subUnitId"
+                    value={formData.subUnitId}
+                    onChange={handleChange}
+                    disabled={loading || !formData.unitId}
+                  >
+                    <option value="">선택하세요</option>
+                    {subUnits.map(subUnit => (
+                      <option key={subUnit.id} value={subUnit.id}>
+                        {subUnit.displayName}
                       </option>
                     ))}
                   </select>
