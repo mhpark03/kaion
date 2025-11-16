@@ -69,6 +69,9 @@ public class Question {
     @Column(name = "correct_answer", columnDefinition = "TEXT")
     private String correctAnswer;  // 정답 (주관식/서술형용, 객관식은 QuestionOption의 isCorrect로 관리)
 
+    @Column(columnDefinition = "TEXT")
+    private String explanation;  // 해설 (AI가 생성하거나 교사가 작성)
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
