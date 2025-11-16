@@ -3,12 +3,19 @@ spring:
     name: edutest-backend
 
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # 공통 데이터베이스 설정 - 로컬과 AWS 모두 동일한 DB 사용
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/edutest}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
         format_sql: true
@@ -41,15 +48,15 @@ ai:
     chat-model: gpt-5-mini  # Better reasoning for education: $0.25/1M input, $2.00/1M output
     image-model: dall-e-3
 
-# JWT 설정
+# JWT 설정 - 로컬과 AWS 공통 (환경 변수로 오버라이드 가능)
 jwt:
-  secret: your-secret-key-change-this-in-production-minimum-256-bits
-  expiration: 86400000  # 24 hours in milliseconds
-  refresh-expiration: 604800000  # 7 days in milliseconds
+  secret: ${JWT_SECRET:5sNquQ9x2JLI1qyqqRWd+Ft/AytI4hQY19UoGXklZVze6i2OQbgdIjzwFSZXxekJqOn+WWr4k9l+KoDR7tFcVg==}
+  expiration: ${JWT_EXPIRATION:86400000}  # 24 hours in milliseconds
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}  # 7 days in milliseconds
 
 # Server 설정
 server:
-  port: 8081
+  port: ${PORT:8081}  # 로컬: 8081, AWS Elastic Beanstalk: 5000 (자동 설정)
   error:
     include-message: always
     include-binding-errors: always
@@ -59,10 +66,10 @@ server:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5174,http://kiosk-frontend-20251018.s3-website.ap-northeast-2.amazonaws.com}
 
-# Logging
+# Logging - 환경에 따라 자동 조정
 logging:
   level:
-    com.edutest: DEBUG
-    org.springframework.security: DEBUG
-    org.hibernate.SQL: DEBUG
+    com.edutest: ${LOG_LEVEL:DEBUG}
+    org.springframework.security: ${LOG_LEVEL:DEBUG}
+    org.hibernate.SQL: ${LOG_LEVEL:DEBUG}
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
