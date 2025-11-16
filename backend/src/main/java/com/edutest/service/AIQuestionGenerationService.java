@@ -358,6 +358,7 @@ public class AIQuestionGenerationService {
             requestBody.put("prompt", imagePrompt);
             requestBody.put("n", 1);
             requestBody.put("size", "1024x1024");
+            requestBody.put("response_format", "b64_json");  // Request base64 instead of URL
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
@@ -370,7 +371,7 @@ public class AIQuestionGenerationService {
             );
 
             JsonNode root = objectMapper.readTree(response.getBody());
-            String imageUrl = root.path("data").get(0).path("url").asText();
+            String base64Image = root.path("data").get(0).path("b64_json").asText();
 
             // Extract SubUnit ID for folder organization
             Long subUnitId = null;
@@ -378,9 +379,9 @@ public class AIQuestionGenerationService {
                 subUnitId = concept.getSubUnit().getId();
             }
 
-            // Download the image from OpenAI and save it to S3 (organized by SubUnit)
-            log.info("Downloading generated image from OpenAI and uploading to S3...");
-            String savedImagePath = downloadAndSaveImage(imageUrl, subUnitId);
+            // Decode base64 image and save it to S3 (organized by SubUnit)
+            log.info("Decoding generated image and uploading to S3...");
+            String savedImagePath = saveBase64ImageToS3(base64Image, subUnitId);
 
             return savedImagePath;
         } catch (Exception e) {
@@ -390,21 +391,20 @@ public class AIQuestionGenerationService {
     }
 
     /**
-     * Download image from OpenAI URL and save to S3
+     * Decode base64 image from DALL-E and save to S3
      * Images are organized by SubUnit for better file management
      *
-     * @param imageUrl The OpenAI image URL to download
+     * @param base64Image The base64-encoded image from DALL-E
      * @param subUnitId The SubUnit ID for folder organization (null if not available)
      * @return The relative path that can be accessed via the backend API
      */
-    private String downloadAndSaveImage(String imageUrl, Long subUnitId) throws IOException {
+    private String saveBase64ImageToS3(String base64Image, Long subUnitId) throws IOException {
         try {
-            // Download image from OpenAI URL
-            ResponseEntity<byte[]> imageResponse = restTemplate.getForEntity(imageUrl, byte[].class);
-            byte[] imageBytes = imageResponse.getBody();
+            // Decode base64 image
+            byte[] imageBytes = Base64.getDecoder().decode(base64Image);
 
             if (imageBytes == null || imageBytes.length == 0) {
-                throw new IOException("Failed to download image from OpenAI");
+                throw new IOException("Failed to decode base64 image from DALL-E");
             }
 
             // Generate unique filename
@@ -422,7 +422,7 @@ public class AIQuestionGenerationService {
             // Return relative path that can be accessed via API
             return "/api/questions/images/ai-generated/" + subUnitFolder + "/" + filename;
         } catch (Exception e) {
-            log.error("Failed to download and save image to S3: {}", e.getMessage(), e);
+            log.error("Failed to decode and save image to S3: {}", e.getMessage(), e);
             throw new IOException("Failed to save generated image: " + e.getMessage(), e);
         }
     }
