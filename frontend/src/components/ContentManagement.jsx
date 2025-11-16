@@ -11,6 +11,7 @@ import './ContentManagement.css';
 const ContentManagement = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [loadingDetails, setLoadingDetails] = useState(false); // Background loading for secondary data
   const [error, setError] = useState('');
 
   // Data states
@@ -45,13 +46,59 @@ const ContentManagement = () => {
   const [formData, setFormData] = useState({});
 
   useEffect(() => {
-    loadAllData();
+    loadPrimaryData();
   }, []);
 
   useEffect(() => {
     setCurrentPage(1); // Reset to first page when filters change
   }, [filterLevelId, filterGradeId, searchText]);
 
+  // Load primary data first (for quick initial render)
+  const loadPrimaryData = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      // Load essential data first (levels and grades)
+      const [levelsRes, gradesRes] = await Promise.all([
+        levelService.getAll(),
+        gradeService.getAll()
+      ]);
+      setLevels(levelsRes.data);
+      setGrades(gradesRes.data);
+
+      // Show UI immediately with primary data
+      setLoading(false);
+
+      // Load secondary data in background
+      loadSecondaryData();
+    } catch (error) {
+      setError('데이터를 불러오는데 실패했습니다');
+      console.error(error);
+      setLoading(false);
+    }
+  };
+
+  // Load secondary data in background (for pagination and modals)
+  const loadSecondaryData = async () => {
+    setLoadingDetails(true);
+    try {
+      const [unitsRes, subUnitsRes, conceptsRes] = await Promise.all([
+        unitService.getAll(),
+        subUnitService.getAll(),
+        conceptService.getAll()
+      ]);
+      setUnits(unitsRes.data);
+      setSubUnits(subUnitsRes.data);
+      setConcepts(conceptsRes.data);
+    } catch (error) {
+      console.error('Failed to load secondary data:', error);
+      // Don't show error to user since this is background loading
+    } finally {
+      setLoadingDetails(false);
+    }
+  };
+
+  // Refresh all data (used after create/update/delete)
   const loadAllData = async () => {
     setLoading(true);
     setError('');
@@ -382,10 +429,15 @@ const ContentManagement = () => {
     const currentItems = items.slice(indexOfFirstItem, indexOfLastItem);
     const totalPages = Math.ceil(items.length / itemsPerPage);
 
+    // Check if this section is waiting for background data
+    const isWaitingForData = loadingDetails && (type === 'unit' || type === 'subunit' || type === 'concept');
+
     return (
       <div className="content-section">
         {items.length === 0 ? (
-          <div className="empty-section">등록된 {title}이(가) 없습니다</div>
+          <div className="empty-section">
+            {isWaitingForData ? '데이터 로딩 중...' : `등록된 ${title}이(가) 없습니다`}
+          </div>
         ) : (
           <>
             <div className="table-wrapper">
@@ -602,7 +654,14 @@ const ContentManagement = () => {
 
       <div className="content-management">
         <div className="page-header">
-          <h1>과정관리</h1>
+          <h1>
+            과정관리
+            {loadingDetails && (
+              <span style={{ fontSize: '0.8rem', color: '#666', marginLeft: '10px' }}>
+                (상세 데이터 로딩 중...)
+              </span>
+            )}
+          </h1>
           <div className="icon-buttons">
             <button onClick={() => openCreateModal('level')} className="icon-btn level" title="교육과정">
               과
