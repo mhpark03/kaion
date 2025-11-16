@@ -14,5 +14,5 @@ public interface SubjectRepository extends JpaRepository<Subject, Long> {
 
     Boolean existsByName(String name);
 
-    List<Subject> findByGradeIdOrderByOrderIndexAsc(Long gradeId);
+    List<Subject> findByGradeIdOrderByIdAsc(Long gradeId);
 }

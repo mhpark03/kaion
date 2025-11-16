@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { levelService } from '../services/levelService';
 import { gradeService } from '../services/gradeService';
-import { subjectService } from '../services/subjectService';
 import { unitService } from '../services/unitService';
 import { subUnitService } from '../services/subUnitService';
 import { DIFFICULTY_LEVELS } from '../constants/difficulty';
@@ -23,7 +22,6 @@ const UserProfile = () => {
     confirmPassword: '',
     levelId: '',
     gradeId: '',
-    subjectId: '',
     unitId: '',
     subUnitId: '',
     proficiencyLevel: ''
@@ -31,11 +29,9 @@ const UserProfile = () => {
 
   const [levels, setLevels] = useState([]);
   const [grades, setGrades] = useState([]);
-  const [subjects, setSubjects] = useState([]);
   const [units, setUnits] = useState([]);
   const [subUnits, setSubUnits] = useState([]);
   const [allGrades, setAllGrades] = useState([]);
-  const [allSubjects, setAllSubjects] = useState([]);
   const [allUnits, setAllUnits] = useState([]);
   const [allSubUnits, setAllSubUnits] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,16 +44,14 @@ const UserProfile = () => {
 
   const loadData = async () => {
     try {
-      const [levelsResponse, gradesResponse, subjectsResponse, unitsResponse, subUnitsResponse] = await Promise.all([
+      const [levelsResponse, gradesResponse, unitsResponse, subUnitsResponse] = await Promise.all([
         levelService.getAll(),
         gradeService.getAll(),
-        subjectService.getAll(),
         unitService.getAll(),
         subUnitService.getAll()
       ]);
       setLevels(levelsResponse.data);
       setAllGrades(gradesResponse.data);
-      setAllSubjects(subjectsResponse.data);
       setAllUnits(unitsResponse.data);
       setAllSubUnits(subUnitsResponse.data);
 
@@ -72,7 +66,6 @@ const UserProfile = () => {
           confirmPassword: '',
           levelId: user.levelId?.toString() || '',
           gradeId: user.gradeId?.toString() || '',
-          subjectId: user.subjectId?.toString() || '',
           unitId: user.unitId?.toString() || '',
           subUnitId: user.subUnitId?.toString() || '',
           proficiencyLevel: user.proficiencyLevel || ''
@@ -98,37 +91,14 @@ const UserProfile = () => {
           g => g.id === parseInt(formData.gradeId)
         );
         if (!gradeExists) {
-          setFormData(prev => ({ ...prev, gradeId: '', subjectId: '', unitId: '', subUnitId: '' }));
+          setFormData(prev => ({ ...prev, gradeId: '', unitId: '', subUnitId: '' }));
         }
       }
     } else {
       setGrades([]);
-      setFormData(prev => ({ ...prev, gradeId: '', subjectId: '', unitId: '', subUnitId: '' }));
+      setFormData(prev => ({ ...prev, gradeId: '', unitId: '', subUnitId: '' }));
     }
   }, [formData.levelId, allGrades]);
-
-  // Filter subjects when grade changes
-  useEffect(() => {
-    if (formData.gradeId) {
-      const filteredSubjects = allSubjects.filter(
-        subject => subject.gradeId === parseInt(formData.gradeId)
-      );
-      setSubjects(filteredSubjects);
-
-      // Reset subject if it doesn't belong to selected grade
-      if (formData.subjectId) {
-        const subjectExists = filteredSubjects.some(
-          s => s.id === parseInt(formData.subjectId)
-        );
-        if (!subjectExists) {
-          setFormData(prev => ({ ...prev, subjectId: '', unitId: '', subUnitId: '' }));
-        }
-      }
-    } else {
-      setSubjects([]);
-      setFormData(prev => ({ ...prev, subjectId: '', unitId: '', subUnitId: '' }));
-    }
-  }, [formData.gradeId, allSubjects]);
 
   // Filter units when grade changes (units are filtered by grade, not subject)
   useEffect(() => {
@@ -214,7 +184,6 @@ const UserProfile = () => {
         email: formData.email,
         levelId: formData.levelId ? parseInt(formData.levelId) : null,
         gradeId: formData.gradeId ? parseInt(formData.gradeId) : null,
-        subjectId: formData.subjectId ? parseInt(formData.subjectId) : null,
         unitId: formData.unitId ? parseInt(formData.unitId) : null,
         subUnitId: formData.subUnitId ? parseInt(formData.subUnitId) : null,
         proficiencyLevel: formData.proficiencyLevel || null
@@ -351,24 +320,6 @@ const UserProfile = () => {
                     {grades.map(grade => (
                       <option key={grade.id} value={grade.id}>
                         {grade.displayName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="subjectId">과목</label>
-                  <select
-                    id="subjectId"
-                    name="subjectId"
-                    value={formData.subjectId}
-                    onChange={handleChange}
-                    disabled={loading || !formData.gradeId}
-                  >
-                    <option value="">선택하세요</option>
-                    {subjects.map(subject => (
-                      <option key={subject.id} value={subject.id}>
-                        {subject.displayName}
                       </option>
                     ))}
                   </select>

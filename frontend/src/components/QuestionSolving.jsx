@@ -3,7 +3,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { questionService } from '../services/questionService';
 import { levelService } from '../services/levelService';
 import { gradeService } from '../services/gradeService';
-import { subjectService } from '../services/subjectService';
 import { unitService } from '../services/unitService';
 import { subUnitService } from '../services/subUnitService';
 import { conceptService } from '../services/conceptService';
@@ -16,7 +15,6 @@ const QuestionSolving = () => {
   const [questions, setQuestions] = useState([]);
   const [levels, setLevels] = useState([]);
   const [grades, setGrades] = useState([]);
-  const [subjects, setSubjects] = useState([]);
   const [units, setUnits] = useState([]);
   const [subUnits, setSubUnits] = useState([]);
   const [concepts, setConcepts] = useState([]);
@@ -29,7 +27,6 @@ const QuestionSolving = () => {
   // Filters
   const [filterLevel, setFilterLevel] = useState('');
   const [filterGrade, setFilterGrade] = useState('');
-  const [filterSubject, setFilterSubject] = useState('');
   const [filterUnit, setFilterUnit] = useState('');
   const [filterSubUnit, setFilterSubUnit] = useState('');
   const [filterConcept, setFilterConcept] = useState('');
@@ -48,11 +45,10 @@ const QuestionSolving = () => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [questionsRes, levelsRes, gradesRes, subjectsRes, unitsRes, subUnitsRes, conceptsRes] = await Promise.all([
+      const [questionsRes, levelsRes, gradesRes, unitsRes, subUnitsRes, conceptsRes] = await Promise.all([
         questionService.getAll(),
         levelService.getAll(),
         gradeService.getAll(),
-        subjectService.getAll(),
         unitService.getAll(),
         subUnitService.getAll(),
         conceptService.getAll()
@@ -60,7 +56,6 @@ const QuestionSolving = () => {
       setQuestions(questionsRes.data);
       setLevels(levelsRes.data);
       setGrades(gradesRes.data);
-      setSubjects(subjectsRes.data);
       setUnits(unitsRes.data);
       setSubUnits(subUnitsRes.data);
       setConcepts(conceptsRes.data);
@@ -69,7 +64,6 @@ const QuestionSolving = () => {
       if (isStudent) {
         if (user?.levelId) setFilterLevel(user.levelId.toString());
         if (user?.gradeId) setFilterGrade(user.gradeId.toString());
-        if (user?.subjectId) setFilterSubject(user.subjectId.toString());
         if (user?.unitId) setFilterUnit(user.unitId.toString());
         if (user?.subUnitId) setFilterSubUnit(user.subUnitId.toString());
         if (user?.proficiencyLevel) setFilterDifficulty(user.proficiencyLevel);
@@ -86,7 +80,6 @@ const QuestionSolving = () => {
     return questions.filter(q => {
       if (filterLevel && q.levelId !== parseInt(filterLevel)) return false;
       if (filterGrade && q.gradeId !== parseInt(filterGrade)) return false;
-      if (filterSubject && q.subjectId !== parseInt(filterSubject)) return false;
       if (filterDifficulty && q.difficulty !== filterDifficulty) return false;
 
       // Unit filter - check if question's subUnit belongs to selected unit
@@ -106,7 +99,7 @@ const QuestionSolving = () => {
 
       return true;
     });
-  }, [questions, filterLevel, filterGrade, filterSubject, filterUnit, filterSubUnit, filterConcept, filterDifficulty, subUnits]);
+  }, [questions, filterLevel, filterGrade, filterUnit, filterSubUnit, filterConcept, filterDifficulty, subUnits]);
 
   const currentQuestion = filteredQuestions[currentQuestionIndex];
 
@@ -179,7 +172,6 @@ const QuestionSolving = () => {
             <div className="profile-info-grid">
               {filterLevel && <span><strong>교육과정:</strong> {levels.find(l => l.id === parseInt(filterLevel))?.displayName || '-'}</span>}
               {filterGrade && <span><strong>학년:</strong> {grades.find(g => g.id === parseInt(filterGrade))?.displayName || '-'}</span>}
-              {filterSubject && <span><strong>과목:</strong> {subjects.find(s => s.id === parseInt(filterSubject))?.displayName || '-'}</span>}
               {filterUnit && <span><strong>대단원:</strong> {units.find(u => u.id === parseInt(filterUnit))?.displayName || '-'}</span>}
               {filterSubUnit && <span><strong>소단원:</strong> {subUnits.find(su => su.id === parseInt(filterSubUnit))?.displayName || '-'}</span>}
               {filterDifficulty && <span><strong>난이도:</strong> {DIFFICULTY_LEVELS.find(d => d.value === filterDifficulty)?.label || '-'}</span>}
@@ -209,18 +201,6 @@ const QuestionSolving = () => {
                   .filter(grade => !filterLevel || grade.levelId === parseInt(filterLevel))
                   .map(grade => (
                     <option key={grade.id} value={grade.id}>{grade.displayName}</option>
-                  ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>과목</label>
-              <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
-                <option value="">전체</option>
-                {subjects
-                  .filter(subject => !filterGrade || subject.gradeId === parseInt(filterGrade))
-                  .map(subject => (
-                    <option key={subject.id} value={subject.id}>{subject.displayName}</option>
                   ))}
               </select>
             </div>

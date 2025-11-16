@@ -74,7 +74,7 @@ public class UserService {
                     .orElseThrow(() -> new IllegalArgumentException("Invalid grade ID"));
 
             // Auto-set subject, unit, subUnit to first item in selected grade
-            List<Subject> subjects = subjectRepository.findByGradeIdOrderByOrderIndexAsc(grade.getId());
+            List<Subject> subjects = subjectRepository.findByGradeIdOrderByIdAsc(grade.getId());
             if (!subjects.isEmpty()) {
                 subject = subjects.get(0);
 
