@@ -204,10 +204,37 @@ public class UserService {
         return builder.build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserResponse getUserByUsername(String username) {
         User user = userRepository.findByUsernameWithProfile(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // Auto-set unit/subUnit for existing users who have grade but no unit/subUnit
+        boolean needsUpdate = false;
+        if (user.getGrade() != null && (user.getUnit() == null || user.getSubUnit() == null)) {
+            // Auto-set subject, unit, subUnit to first item in selected grade
+            List<Subject> subjects = subjectRepository.findByGradeIdOrderByIdAsc(user.getGrade().getId());
+            if (!subjects.isEmpty() && user.getSubject() == null) {
+                user.setSubject(subjects.get(0));
+                needsUpdate = true;
+            }
+
+            List<Unit> units = unitRepository.findByGradeIdOrderByOrderIndexAsc(user.getGrade().getId());
+            if (!units.isEmpty() && user.getUnit() == null) {
+                user.setUnit(units.get(0));
+                needsUpdate = true;
+
+                List<SubUnit> subUnits = subUnitRepository.findByUnitIdOrderByOrderIndexAsc(units.get(0).getId());
+                if (!subUnits.isEmpty() && user.getSubUnit() == null) {
+                    user.setSubUnit(subUnits.get(0));
+                    needsUpdate = true;
+                }
+            }
+
+            if (needsUpdate) {
+                userRepository.save(user);
+            }
+        }
 
         return buildUserResponse(user);
     }
