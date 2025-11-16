@@ -345,10 +345,11 @@ public class AIQuestionGenerationService {
             headers.setBearerAuth(apiKey);
 
             String imagePrompt = String.format(
-                "Educational illustration for a science question about '%s'. " +
-                "Style: clean, simple, educational diagram. " +
-                "Content related to: %s",
-                concept.getName(),
+                "한국 과학 교육용 삽화. 주제: '%s'. " +
+                "스타일: 깔끔하고 단순한 교육용 다이어그램. " +
+                "내용: %s. " +
+                "중요 지침: 이미지에 포함되는 모든 텍스트, 라벨, 설명은 반드시 한글로 작성하세요. 영어를 사용하지 마세요.",
+                concept.getDisplayName(),
                 questionText.substring(0, Math.min(questionText.length(), 200))
             );
 
