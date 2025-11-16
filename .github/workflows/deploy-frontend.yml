@@ -1,12 +1,12 @@
-name: Deploy Frontend to S3
+name: Deploy Frontend to S3 (Manual Only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/deploy-frontend.yml'
-  workflow_dispatch: # 수동 실행 가능
+  workflow_dispatch: # 수동 실행만 가능 (자동 배포 비활성화)
+  # push:  # 메모리 문제로 자동 배포 비활성화
+  #   branches: [main]
+  #   paths:
+  #     - 'frontend/**'
+  #     - '.github/workflows/deploy-frontend.yml'
 
 env:
   AWS_REGION: ap-northeast-2
