@@ -103,7 +103,7 @@ const QuestionSolving = () => {
   const isCorrect = () => {
     if (!currentQuestion) return false;
 
-    if (currentQuestion.questionType === 'MULTIPLE_CHOICE') {
+    if (currentQuestion.questionType === 'MULTIPLE_CHOICE' || currentQuestion.questionType === 'TRUE_FALSE') {
       const correctOption = currentQuestion.options?.find(opt => opt.correct);
       return userAnswer === correctOption?.optionText;
     } else {
@@ -214,7 +214,7 @@ const QuestionSolving = () => {
               )}
 
               <div className="answer-section">
-                {currentQuestion.questionType === 'MULTIPLE_CHOICE' && currentQuestion.options ? (
+                {(currentQuestion.questionType === 'MULTIPLE_CHOICE' || currentQuestion.questionType === 'TRUE_FALSE') && currentQuestion.options ? (
                   <div className="options-list">
                     {currentQuestion.options.map((option, idx) => (
                       <div
