@@ -4,6 +4,9 @@ import { questionService } from '../services/questionService';
 import { levelService } from '../services/levelService';
 import { gradeService } from '../services/gradeService';
 import { subjectService } from '../services/subjectService';
+import { unitService } from '../services/unitService';
+import { subUnitService } from '../services/subUnitService';
+import { conceptService } from '../services/conceptService';
 import { DIFFICULTY_LEVELS, getDifficultyLabel } from '../constants/difficulty';
 import Navbar from './Navbar';
 import './QuestionSolving.css';
@@ -14,13 +17,22 @@ const QuestionSolving = () => {
   const [levels, setLevels] = useState([]);
   const [grades, setGrades] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [units, setUnits] = useState([]);
+  const [subUnits, setSubUnits] = useState([]);
+  const [concepts, setConcepts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Check if user is student
+  const isStudent = user?.role === 'STUDENT';
 
   // Filters
   const [filterLevel, setFilterLevel] = useState('');
   const [filterGrade, setFilterGrade] = useState('');
   const [filterSubject, setFilterSubject] = useState('');
+  const [filterUnit, setFilterUnit] = useState('');
+  const [filterSubUnit, setFilterSubUnit] = useState('');
+  const [filterConcept, setFilterConcept] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
 
   // Current question and answer
@@ -36,21 +48,33 @@ const QuestionSolving = () => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [questionsRes, levelsRes, gradesRes, subjectsRes] = await Promise.all([
+      const [questionsRes, levelsRes, gradesRes, subjectsRes, unitsRes, subUnitsRes, conceptsRes] = await Promise.all([
         questionService.getAll(),
         levelService.getAll(),
         gradeService.getAll(),
-        subjectService.getAll()
+        subjectService.getAll(),
+        unitService.getAll(),
+        subUnitService.getAll(),
+        conceptService.getAll()
       ]);
       setQuestions(questionsRes.data);
       setLevels(levelsRes.data);
       setGrades(gradesRes.data);
       setSubjects(subjectsRes.data);
+      setUnits(unitsRes.data);
+      setSubUnits(subUnitsRes.data);
+      setConcepts(conceptsRes.data);
 
-      // Set default filters based on user profile
-      if (user?.levelId) setFilterLevel(user.levelId.toString());
-      if (user?.gradeId) setFilterGrade(user.gradeId.toString());
-      if (user?.proficiencyLevel) setFilterDifficulty(user.proficiencyLevel);
+      // For students: Set filters based on user profile and make them readonly
+      if (isStudent) {
+        if (user?.levelId) setFilterLevel(user.levelId.toString());
+        if (user?.gradeId) setFilterGrade(user.gradeId.toString());
+        if (user?.subjectId) setFilterSubject(user.subjectId.toString());
+        if (user?.unitId) setFilterUnit(user.unitId.toString());
+        if (user?.subUnitId) setFilterSubUnit(user.subUnitId.toString());
+        if (user?.conceptId) setFilterConcept(user.conceptId.toString());
+        if (user?.proficiencyLevel) setFilterDifficulty(user.proficiencyLevel);
+      }
     } catch (err) {
       setError('데이터를 불러오는데 실패했습니다.');
       console.error(err);
@@ -65,9 +89,25 @@ const QuestionSolving = () => {
       if (filterGrade && q.gradeId !== parseInt(filterGrade)) return false;
       if (filterSubject && q.subjectId !== parseInt(filterSubject)) return false;
       if (filterDifficulty && q.difficulty !== filterDifficulty) return false;
+
+      // Unit filter - check if question's subUnit belongs to selected unit
+      if (filterUnit) {
+        const questionSubUnit = subUnits.find(su => su.id === q.subUnitId);
+        if (!questionSubUnit || questionSubUnit.unitId !== parseInt(filterUnit)) return false;
+      }
+
+      // SubUnit filter
+      if (filterSubUnit && q.subUnitId !== parseInt(filterSubUnit)) return false;
+
+      // Concept filter - check if question has the selected concept
+      if (filterConcept) {
+        const hasConcept = q.concepts && q.concepts.some(c => c.id === parseInt(filterConcept));
+        if (!hasConcept) return false;
+      }
+
       return true;
     });
-  }, [questions, filterLevel, filterGrade, filterSubject, filterDifficulty]);
+  }, [questions, filterLevel, filterGrade, filterSubject, filterUnit, filterSubUnit, filterConcept, filterDifficulty, subUnits]);
 
   const currentQuestion = filteredQuestions[currentQuestionIndex];
 
@@ -133,48 +173,107 @@ const QuestionSolving = () => {
 
         {error && <div className="error-message">{error}</div>}
 
-        {/* Filters */}
-        <div className="filters-section">
-          <div className="filter-group">
-            <label>교육과정</label>
-            <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
-              <option value="">전체</option>
-              {levels.map(level => (
-                <option key={level.id} value={level.id}>{level.displayName}</option>
-              ))}
-            </select>
+        {/* Student: Show profile info, not editable filters */}
+        {isStudent && (
+          <div className="student-profile-info">
+            <h3>내 학습 정보</h3>
+            <div className="profile-info-grid">
+              {filterLevel && <span><strong>교육과정:</strong> {levels.find(l => l.id === parseInt(filterLevel))?.displayName || '-'}</span>}
+              {filterGrade && <span><strong>학년:</strong> {grades.find(g => g.id === parseInt(filterGrade))?.displayName || '-'}</span>}
+              {filterSubject && <span><strong>과목:</strong> {subjects.find(s => s.id === parseInt(filterSubject))?.displayName || '-'}</span>}
+              {filterUnit && <span><strong>대단원:</strong> {units.find(u => u.id === parseInt(filterUnit))?.displayName || '-'}</span>}
+              {filterSubUnit && <span><strong>소단원:</strong> {subUnits.find(su => su.id === parseInt(filterSubUnit))?.displayName || '-'}</span>}
+              {filterConcept && <span><strong>핵심개념:</strong> {concepts.find(c => c.id === parseInt(filterConcept))?.displayName || '-'}</span>}
+              {filterDifficulty && <span><strong>난이도:</strong> {DIFFICULTY_LEVELS.find(d => d.value === filterDifficulty)?.label || '-'}</span>}
+            </div>
+            <p className="profile-edit-hint">프로필 설정을 변경하려면 <a href="#/profile">프로필 페이지</a>에서 수정하세요.</p>
           </div>
+        )}
 
-          <div className="filter-group">
-            <label>학년</label>
-            <select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)}>
-              <option value="">전체</option>
-              {grades.map(grade => (
-                <option key={grade.id} value={grade.id}>{grade.displayName}</option>
-              ))}
-            </select>
-          </div>
+        {/* Teacher/Admin: Show all filters */}
+        {!isStudent && (
+          <div className="filters-section">
+            <div className="filter-group">
+              <label>교육과정</label>
+              <select value={filterLevel} onChange={(e) => setFilterLevel(e.target.value)}>
+                <option value="">전체</option>
+                {levels.map(level => (
+                  <option key={level.id} value={level.id}>{level.displayName}</option>
+                ))}
+              </select>
+            </div>
 
-          <div className="filter-group">
-            <label>과목</label>
-            <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
-              <option value="">전체</option>
-              {subjects.map(subject => (
-                <option key={subject.id} value={subject.id}>{subject.displayName}</option>
-              ))}
-            </select>
-          </div>
+            <div className="filter-group">
+              <label>학년</label>
+              <select value={filterGrade} onChange={(e) => setFilterGrade(e.target.value)}>
+                <option value="">전체</option>
+                {grades
+                  .filter(grade => !filterLevel || grade.levelId === parseInt(filterLevel))
+                  .map(grade => (
+                    <option key={grade.id} value={grade.id}>{grade.displayName}</option>
+                  ))}
+              </select>
+            </div>
 
-          <div className="filter-group">
-            <label>난이도</label>
-            <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)}>
-              <option value="">전체</option>
-              {DIFFICULTY_LEVELS.map(level => (
-                <option key={level.value} value={level.value}>{level.label}</option>
-              ))}
-            </select>
+            <div className="filter-group">
+              <label>과목</label>
+              <select value={filterSubject} onChange={(e) => setFilterSubject(e.target.value)}>
+                <option value="">전체</option>
+                {subjects
+                  .filter(subject => !filterGrade || subject.gradeId === parseInt(filterGrade))
+                  .map(subject => (
+                    <option key={subject.id} value={subject.id}>{subject.displayName}</option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>대단원</label>
+              <select value={filterUnit} onChange={(e) => setFilterUnit(e.target.value)}>
+                <option value="">전체</option>
+                {units
+                  .filter(unit => !filterGrade || unit.gradeId === parseInt(filterGrade))
+                  .map(unit => (
+                    <option key={unit.id} value={unit.id}>{unit.displayName}</option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>소단원</label>
+              <select value={filterSubUnit} onChange={(e) => setFilterSubUnit(e.target.value)}>
+                <option value="">전체</option>
+                {subUnits
+                  .filter(subUnit => !filterUnit || subUnit.unitId === parseInt(filterUnit))
+                  .map(subUnit => (
+                    <option key={subUnit.id} value={subUnit.id}>{subUnit.displayName}</option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>핵심개념</label>
+              <select value={filterConcept} onChange={(e) => setFilterConcept(e.target.value)}>
+                <option value="">전체</option>
+                {concepts
+                  .filter(concept => !filterSubUnit || concept.subUnitId === parseInt(filterSubUnit))
+                  .map(concept => (
+                    <option key={concept.id} value={concept.id}>{concept.displayName}</option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>난이도</label>
+              <select value={filterDifficulty} onChange={(e) => setFilterDifficulty(e.target.value)}>
+                <option value="">전체</option>
+                {DIFFICULTY_LEVELS.map(level => (
+                  <option key={level.value} value={level.value}>{level.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="question-stats">
           <span>총 {filteredQuestions.length}개의 문제</span>
