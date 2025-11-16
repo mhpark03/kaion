@@ -210,6 +210,7 @@ const QuestionCreate = () => {
         questionText: aiPreview.questionText,
         questionType: formData.questionType,
         correctAnswer: aiPreview.correctAnswer,
+        explanation: aiPreview.explanation || '',  // Include AI-generated explanation
         points: 10,
         options: options
       };

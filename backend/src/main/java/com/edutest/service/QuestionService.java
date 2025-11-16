@@ -100,6 +100,7 @@ public class QuestionService {
                 .referenceImage(request.getReferenceImage())
                 .referenceDocument(request.getReferenceDocument())
                 .correctAnswer(request.getCorrectAnswer())
+                .explanation(request.getExplanation())
                 .concept(concept)
                 .build();
 
@@ -183,6 +184,7 @@ public class QuestionService {
         question.setReferenceImage(request.getReferenceImage());
         question.setReferenceDocument(request.getReferenceDocument());
         question.setCorrectAnswer(request.getCorrectAnswer());
+        question.setExplanation(request.getExplanation());
         question.setConcept(concept);
 
         Question updatedQuestion = questionRepository.save(question);
@@ -289,6 +291,7 @@ public class QuestionService {
                 .questionText(question.getContent())
                 .questionType(question.getQuestionType().name())
                 .correctAnswer(correctAnswer)
+                .explanation(question.getExplanation())
                 .points(question.getPoints())
                 .referenceImage(question.getReferenceImage())
                 .referenceDocument(question.getReferenceDocument())

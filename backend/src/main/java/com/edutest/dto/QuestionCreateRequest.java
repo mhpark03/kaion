@@ -12,6 +12,7 @@ public class QuestionCreateRequest {
     private String questionText;
     private String questionType; // MULTIPLE_CHOICE, TRUE_FALSE, SHORT_ANSWER, ESSAY
     private String correctAnswer;
+    private String explanation; // 해설 (AI가 생성하거나 교사가 작성)
     private Integer points;
     private String referenceImage; // 참조 이미지 파일 경로
     private String referenceDocument; // 참조 문서 파일 경로

@@ -146,6 +146,7 @@ const QuestionManagement = () => {
         questionText: formData.questionText,
         questionType: formData.questionType,
         correctAnswer: formData.correctAnswer,
+        explanation: formData.explanation || '',  // Include explanation
         points: editingQuestion?.points || 10,
         options: formData.options,
         conceptIds: conceptIds
