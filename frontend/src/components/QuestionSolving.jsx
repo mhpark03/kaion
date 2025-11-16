@@ -72,7 +72,6 @@ const QuestionSolving = () => {
         if (user?.subjectId) setFilterSubject(user.subjectId.toString());
         if (user?.unitId) setFilterUnit(user.unitId.toString());
         if (user?.subUnitId) setFilterSubUnit(user.subUnitId.toString());
-        if (user?.conceptId) setFilterConcept(user.conceptId.toString());
         if (user?.proficiencyLevel) setFilterDifficulty(user.proficiencyLevel);
       }
     } catch (err) {
@@ -183,7 +182,6 @@ const QuestionSolving = () => {
               {filterSubject && <span><strong>과목:</strong> {subjects.find(s => s.id === parseInt(filterSubject))?.displayName || '-'}</span>}
               {filterUnit && <span><strong>대단원:</strong> {units.find(u => u.id === parseInt(filterUnit))?.displayName || '-'}</span>}
               {filterSubUnit && <span><strong>소단원:</strong> {subUnits.find(su => su.id === parseInt(filterSubUnit))?.displayName || '-'}</span>}
-              {filterConcept && <span><strong>핵심개념:</strong> {concepts.find(c => c.id === parseInt(filterConcept))?.displayName || '-'}</span>}
               {filterDifficulty && <span><strong>난이도:</strong> {DIFFICULTY_LEVELS.find(d => d.value === filterDifficulty)?.label || '-'}</span>}
             </div>
             <p className="profile-edit-hint">프로필 설정을 변경하려면 <a href="#/profile">프로필 페이지</a>에서 수정하세요.</p>
