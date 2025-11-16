@@ -206,7 +206,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponse getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameWithProfile(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         return buildUserResponse(user);
@@ -214,7 +214,7 @@ public class UserService {
 
     @Transactional
     public UserResponse updateProfile(String username, UserProfileUpdateRequest request) {
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findByUsernameWithProfile(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // Update basic info
