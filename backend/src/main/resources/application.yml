@@ -7,9 +7,9 @@ spring:
 
   # 공통 데이터베이스 설정 - 로컬과 AWS 모두 동일한 DB 사용
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/edutest}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL:jdbc:mysql://kiosk-db.cj0k46yy6vv6.ap-northeast-2.rds.amazonaws.com:3306/edutest}
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:aioztesting}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:

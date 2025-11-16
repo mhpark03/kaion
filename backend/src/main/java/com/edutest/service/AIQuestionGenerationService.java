@@ -468,22 +468,22 @@ public class AIQuestionGenerationService {
      * Priority: S3 > Environment Variable
      */
     private String getOpenAIApiKey() {
+        // First, try to get from environment variable
+        if (openaiApiKey != null && !openaiApiKey.trim().isEmpty() &&
+            !openaiApiKey.equals("your-openai-api-key-here")) {
+            log.debug("Using OpenAI API key from environment variable");
+            return openaiApiKey.trim();
+        }
+
+        // Fallback to S3
         try {
-            // First, try to retrieve from S3
             String s3ApiKey = secretService.retrieveSecret("openai-api-key");
             if (s3ApiKey != null && !s3ApiKey.trim().isEmpty()) {
                 log.debug("Using OpenAI API key from S3");
                 return s3ApiKey.trim();
             }
         } catch (Exception e) {
-            log.warn("Failed to retrieve API key from S3, falling back to environment variable: {}", e.getMessage());
-        }
-
-        // Fallback to environment variable
-        if (openaiApiKey != null && !openaiApiKey.trim().isEmpty() &&
-            !openaiApiKey.equals("your-openai-api-key-here")) {
-            log.debug("Using OpenAI API key from environment variable");
-            return openaiApiKey.trim();
+            log.warn("Failed to retrieve API key from S3: {}", e.getMessage());
         }
 
         return null;
